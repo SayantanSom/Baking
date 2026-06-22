@@ -61,16 +61,17 @@ After creating an account, update `supabase/seed.sql` with your user ID and run 
 ## Deploy to GitHub Pages
 
 1. Push the repo to GitHub
-2. Enable GitHub Pages: Settings → Pages → Source: **GitHub Actions**
-3. Add repository secrets:
+2. Enable GitHub Pages: **Settings → Pages → Build and deployment → Source: GitHub Actions**
+   - Do **not** use "Deploy from a branch" — that serves raw source files and causes `main.tsx` 404 errors
+3. Add repository secrets (**Settings → Secrets and variables → Actions**):
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-4. Push to `main` — the workflow deploys automatically
+4. Push to `main` — the workflow deploys automatically to `https://<username>.github.io/Baking/`
 
 For local builds targeting GitHub Pages:
 
 ```bash
-VITE_BASE_PATH=/your-repo-name/ npm run build
+VITE_BASE_PATH=/Baking/ npm run build:pages
 ```
 
 ## Project Structure
