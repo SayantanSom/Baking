@@ -46,6 +46,10 @@ npm install
      - `http://localhost:9095/**`
      - `http://localhost:9095/login`
      - `http://localhost:9095/reset-password`
+   - **GitHub Pages (production)** — also add (replace with your username/repo if different):
+     - `https://sayantansom.github.io/Baking/**`
+     - `https://sayantansom.github.io/Baking/login`
+     - `https://sayantansom.github.io/Baking/reset-password`
    - If reset links land on `http://localhost:9095/#` only, the app now forwards `type=recovery` hashes to `/reset-password` automatically; fixing Redirect URLs avoids that fallback.
 5. Deploy the invite Edge Function (super admins invite users from **User Approvals**):
 
@@ -100,6 +104,16 @@ After creating an account, update `supabase/seed.sql` with your user ID and run 
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 4. Push to `main` — the workflow deploys automatically to `https://<username>.github.io/Baking/`
+
+**SPA routing on GitHub Pages:** `build:pages` copies `index.html` to `404.html` so routes like `/admin/users` work on refresh. You may still see a `404` in the browser network tab for the document request — that is normal; the app should load if `404.html` was deployed.
+
+**Invites from production:** After changing the invite Edge Function or running `migration_enterprises_v1.sql`, redeploy:
+
+```bash
+npx supabase functions deploy invite-user
+```
+
+If invite fails, the toast now shows the Supabase error (e.g. redirect URL not allowed, or email already registered).
 
 For local builds targeting GitHub Pages:
 

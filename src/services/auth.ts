@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { authRedirectUrl } from '@/lib/authRedirect'
+import { getEdgeFunctionErrorMessage } from '@/lib/edgeFunctionError'
 
 export function getPasswordResetRedirectUrl(): string {
   return authRedirectUrl('/reset-password')
@@ -15,14 +16,16 @@ export async function requestPasswordResetEmail(email: string): Promise<void> {
 
 /** Logged-in user or super admin (via Edge Function). */
 export async function sendPasswordResetEmail(email: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('send-password-reset', {
+  const { data, error, response } = await supabase.functions.invoke('send-password-reset', {
     body: {
       email: email.trim(),
       redirectTo: getPasswordResetRedirectUrl(),
     },
   })
 
-  if (error) throw error
+  if (error) {
+    throw new Error(await getEdgeFunctionErrorMessage(error, response))
+  }
 
   const payload = data as { error?: string } | null
   if (payload?.error) {

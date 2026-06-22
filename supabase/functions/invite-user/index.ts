@@ -60,23 +60,32 @@ Deno.serve(async (req) => {
       return json({ error: 'Email is required' }, 400)
     }
 
+    const inviteOptions: {
+      data: Record<string, string | boolean>
+      redirectTo?: string
+    } = {
+      data: {
+        invited_by_admin: true,
+        invited_by: user.id,
+      },
+    }
+
+    if (redirectTo) {
+      inviteOptions.redirectTo = redirectTo
+    }
+
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
-      {
-        data: {
-          invited_by_admin: true,
-          invited_by: user.id,
-        },
-        redirectTo,
-      }
+      inviteOptions
     )
 
     if (error) {
-      return json({ error: error.message }, 400)
+      const message = formatInviteError(error.message, redirectTo)
+      return json({ error: message }, 400)
     }
 
     if (data.user?.id) {
-      await supabaseAdmin.from('app_users').upsert(
+      const { error: profileError } = await supabaseAdmin.from('app_users').upsert(
         {
           user_id: data.user.id,
           email,
@@ -88,22 +97,41 @@ Deno.serve(async (req) => {
         { onConflict: 'user_id' }
       )
 
-      const { data: enterprise } = await supabaseAdmin
-        .from('enterprises')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-
-      if (enterprise?.id) {
-        await supabaseAdmin.from('enterprise_members').upsert(
+      if (profileError) {
+        return json(
           {
-            enterprise_id: enterprise.id,
-            user_id: data.user.id,
-            role: 'editor',
+            error: `Invite email sent, but account setup failed: ${profileError.message}`,
           },
-          { onConflict: 'enterprise_id,user_id', ignoreDuplicates: true }
+          500
         )
+      }
+
+      try {
+        const { data: enterprise } = await supabaseAdmin
+          .from('enterprises')
+          .select('id')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        if (enterprise?.id) {
+          const { error: memberError } = await supabaseAdmin
+            .from('enterprise_members')
+            .upsert(
+              {
+                enterprise_id: enterprise.id,
+                user_id: data.user.id,
+                role: 'editor',
+              },
+              { onConflict: 'enterprise_id,user_id', ignoreDuplicates: true }
+            )
+
+          if (memberError) {
+            console.error('enterprise_members upsert failed:', memberError.message)
+          }
+        }
+      } catch (enterpriseErr) {
+        console.error('enterprise membership setup failed:', enterpriseErr)
       }
     }
 
@@ -112,6 +140,23 @@ Deno.serve(async (req) => {
     return json({ error: err instanceof Error ? err.message : String(err) }, 500)
   }
 })
+
+function formatInviteError(message: string, redirectTo?: string): string {
+  const lower = message.toLowerCase()
+
+  if (lower.includes('already') && lower.includes('registered')) {
+    return 'A user with this email already exists. Use “Send reset” if they need a new password link.'
+  }
+
+  if (lower.includes('redirect') || lower.includes('url')) {
+    const hint = redirectTo
+      ? ` Add this URL in Supabase → Authentication → URL configuration → Redirect URLs: ${redirectTo}`
+      : ' Check Supabase → Authentication → URL configuration → Redirect URLs.'
+    return `${message}.${hint}`
+  }
+
+  return message
+}
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {

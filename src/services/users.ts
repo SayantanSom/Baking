@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
 import type { AppUser } from '@/types/database'
+import { authRedirectUrl } from '@/lib/authRedirect'
+import { getEdgeFunctionErrorMessage } from '@/lib/edgeFunctionError'
 
 export async function fetchMyAppUser(): Promise<AppUser | null> {
   const { data: auth } = await supabase.auth.getUser()
@@ -51,14 +53,15 @@ export async function rejectAppUser(userId: string): Promise<void> {
 }
 
 export async function inviteAppUser(email: string): Promise<void> {
-  const basePath = import.meta.env.VITE_BASE_PATH ?? '/'
-  const redirectTo = `${window.location.origin}${basePath.replace(/\/$/, '')}/login`
+  const redirectTo = authRedirectUrl('/login')
 
-  const { data, error } = await supabase.functions.invoke('invite-user', {
+  const { data, error, response } = await supabase.functions.invoke('invite-user', {
     body: { email, redirectTo },
   })
 
-  if (error) throw error
+  if (error) {
+    throw new Error(await getEdgeFunctionErrorMessage(error, response))
+  }
 
   const payload = data as { error?: string; success?: boolean } | null
   if (payload?.error) {
