@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import type {
   Product,
   ProductFormData,
+  ProductCreateFormData,
   ProductVariety,
   ProductVarietyFormData,
   ProductVarietyIngredient,
@@ -24,6 +25,8 @@ import {
   getCurrentRecipeVersion,
 } from './recipeVersions'
 import { isCostLocked, isPriceLocked } from '@/lib/varietyLocks'
+import { ConflictError } from '@/lib/errors'
+import { defaultVarietyFromProductCreate } from '@/lib/varietyForm'
 
 const VARIETY_INGREDIENT_SELECT = `
   id,
@@ -115,8 +118,6 @@ export async function fetchVarietyWithRecipe(
   return data as ProductVarietyWithRecipe
 }
 
-import { ConflictError } from '@/lib/errors'
-
 export async function createProduct(
   enterpriseId: string,
   createdBy: string,
@@ -138,6 +139,34 @@ export async function createProduct(
 
   if (error) throw error
   return data
+}
+
+export async function createProductWithDefaultVariety(
+  enterpriseId: string,
+  createdBy: string,
+  form: ProductCreateFormData,
+  settings?: {
+    default_labour_cost?: number
+    default_packaging_cost?: number
+    default_buffer_percentage?: number
+  }
+): Promise<{ product: Product; variety: ProductVariety }> {
+  const product = await createProduct(enterpriseId, createdBy, form)
+  const recipeYield = Math.max(1, form.recipe_yield)
+  const currentVersion = await ensureCurrentRecipeVersion(product.id, recipeYield)
+  const varietyForm = defaultVarietyFromProductCreate(
+    form.name,
+    recipeYield,
+    form.selling_price ?? 0,
+    settings
+  )
+  const variety = await insertProductVariety(
+    product.id,
+    varietyForm,
+    currentVersion.id,
+    false
+  )
+  return { product, variety }
 }
 
 export async function updateProduct(
@@ -189,19 +218,12 @@ export async function recordSellingPriceHistory(
   })
 }
 
-export async function createVarietyFromBaseRecipe(
+async function insertProductVariety(
   productId: string,
-  form: ProductVarietyFormData
+  form: ProductVarietyFormData,
+  sourceRecipeVersionId: string,
+  copyFromBase: boolean
 ): Promise<ProductVariety> {
-  const currentVersion = await ensureCurrentRecipeVersion(productId)
-  const product = await fetchProductWithRecipeVersions(productId)
-  const version = getCurrentRecipeVersion(product)
-  const lines = version?.product_base_recipe_ingredients ?? []
-
-  if (lines.length === 0) {
-    throw new Error('Add a base recipe before creating varieties')
-  }
-
   const now = new Date().toISOString()
   const { data, error } = await supabase
     .from('product_varieties')
@@ -218,7 +240,7 @@ export async function createVarietyFromBaseRecipe(
       buffer_percentage: form.buffer_percentage ?? 5,
       is_catalogue_visible: form.is_catalogue_visible,
       base_recipe_factor: form.base_recipe_factor ?? 1,
-      source_recipe_version_id: currentVersion.id,
+      source_recipe_version_id: sourceRecipeVersionId,
       created_from_base_recipe_at: now,
       last_base_recipe_sync_at: now,
       has_manual_recipe_overrides: false,
@@ -228,29 +250,16 @@ export async function createVarietyFromBaseRecipe(
 
   if (error) throw error
 
-  await copyRecipeVersionToVariety(
-    data.id,
-    currentVersion.id,
-    form.base_recipe_factor ?? 1,
-    'Created from base recipe'
-  )
-
-  const { data: updated } = await supabase
-    .from('product_varieties')
-    .select('*')
-    .eq('id', data.id)
-    .single()
-
-  const variety = updated ?? data
-  await recalculateVarietyCost(variety.id, false)
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (user) {
-    const { createInitialAcceptance } = await import('./varietyAcceptance')
-    await createInitialAcceptance(variety.id, user.id)
+  if (copyFromBase) {
+    await copyRecipeVersionToVariety(
+      data.id,
+      sourceRecipeVersionId,
+      form.base_recipe_factor ?? 1,
+      'Created from base recipe'
+    )
   }
+
+  await recalculateVarietyCost(data.id, false)
 
   const { data: final } = await supabase
     .from('product_varieties')
@@ -258,13 +267,113 @@ export async function createVarietyFromBaseRecipe(
     .eq('id', data.id)
     .single()
 
+  return final ?? data
+}
+
+export async function createVarietyFromBaseRecipe(
+  productId: string,
+  form: ProductVarietyFormData
+): Promise<ProductVariety> {
+  const currentVersion = await ensureCurrentRecipeVersion(productId)
+  const product = await fetchProductWithRecipeVersions(productId)
+  const version = getCurrentRecipeVersion(product)
+  const lines = version?.product_base_recipe_ingredients ?? []
+
+  if (lines.length === 0) {
+    throw new Error('Add a base recipe before creating varieties')
+  }
+
+  return insertProductVariety(productId, form, currentVersion.id, true)
+}
+
+export async function copyVarietyRecipeToVariety(
+  targetVarietyId: string,
+  sourceVarietyId: string,
+  factor: number,
+  reason = 'Copied from variety'
+): Promise<void> {
+  const source = await fetchVarietyWithRecipe(sourceVarietyId)
+  const lines = source.product_variety_ingredients ?? []
+
+  await supabase
+    .from('product_variety_ingredients')
+    .delete()
+    .eq('product_variety_id', targetVarietyId)
+
+  const now = new Date().toISOString()
+  await supabase
+    .from('product_varieties')
+    .update({
+      base_recipe_factor: factor,
+      source_recipe_version_id: source.source_recipe_version_id,
+      last_base_recipe_sync_at: now,
+      created_from_base_recipe_at: now,
+      has_manual_recipe_overrides: false,
+    })
+    .eq('id', targetVarietyId)
+
+  for (const line of lines) {
+    const ing = line.ingredient
+    const vendorPrice = line.vendor_price ?? ing?.active_vendor_price
+    const qty = line.quantity_used * factor
+    const lineCost = getIngredientLineCost(qty, line.unit, ing, vendorPrice)
+
+    await supabase.from('product_variety_ingredients').insert({
+      product_variety_id: targetVarietyId,
+      ingredient_id: line.ingredient_id,
+      quantity_used: qty,
+      unit: line.unit,
+      active_vendor_price_id:
+        vendorPrice?.id ?? ing?.active_vendor_price_id ?? null,
+      calculated_cost: lineCost,
+    })
+  }
+
+  await recalculateVarietyCost(targetVarietyId, true, reason)
+}
+
+export async function createVarietyFromExistingVariety(
+  productId: string,
+  form: ProductVarietyFormData,
+  sourceVarietyId: string
+): Promise<ProductVariety> {
+  const source = await fetchVarietyWithRecipe(sourceVarietyId)
+  if (source.product_id !== productId) {
+    throw new Error('Source variety must belong to the same product')
+  }
+  if ((source.product_variety_ingredients ?? []).length === 0) {
+    throw new Error('Source variety has no recipe ingredients')
+  }
+
+  const versionId =
+    source.source_recipe_version_id ??
+    (await ensureCurrentRecipeVersion(productId)).id
+
+  const variety = await insertProductVariety(productId, form, versionId, false)
+  await copyVarietyRecipeToVariety(
+    variety.id,
+    sourceVarietyId,
+    form.base_recipe_factor ?? 1,
+    'Created from variety'
+  )
+
+  const { data: final } = await supabase
+    .from('product_varieties')
+    .select('*')
+    .eq('id', variety.id)
+    .single()
+
   return final ?? variety
 }
 
 export async function createVariety(
   productId: string,
-  form: ProductVarietyFormData
+  form: ProductVarietyFormData,
+  sourceVarietyId?: string
 ): Promise<ProductVariety> {
+  if (sourceVarietyId) {
+    return createVarietyFromExistingVariety(productId, form, sourceVarietyId)
+  }
   return createVarietyFromBaseRecipe(productId, form)
 }
 

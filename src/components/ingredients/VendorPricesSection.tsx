@@ -190,6 +190,7 @@ export function VendorPricesSection({ ingredient }: { ingredient: Ingredient }) 
         onClose={() => { setFormOpen(false); setEditing(undefined) }}
         ingredient={ingredient}
         vendor={editing}
+        isFirstVendor={(prices ?? []).length === 0}
         onSubmit={handleSubmit}
         loading={createMutation.isPending || updateMutation.isPending}
       />

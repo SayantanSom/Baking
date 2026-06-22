@@ -6,7 +6,7 @@ import {
   setVarietyCatalogueVisibility,
   fetchProductWithVarieties,
   fetchVarietyWithRecipe,
-  createProduct,
+  createProductWithDefaultVariety,
   updateProduct,
   deleteProduct,
   createVariety,
@@ -39,6 +39,7 @@ import {
 } from '@/services/varietyAcceptance'
 import type {
   ProductFormData,
+  ProductCreateFormData,
   ProductVarietyFormData,
   VarietyLockFormData,
   IngredientUnit,
@@ -48,6 +49,7 @@ import type {
 } from '@/types/database'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEnterprise } from '@/contexts/EnterpriseContext'
+import { useSettings } from '@/hooks/useSettings'
 import { isConflictError } from '@/lib/errors'
 
 export function useProducts() {
@@ -122,16 +124,17 @@ export function useCreateProduct() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const { enterpriseId } = useEnterprise()
+  const { data: settings } = useSettings()
 
   return useMutation({
-    mutationFn: (form: ProductFormData) => {
+    mutationFn: (form: ProductCreateFormData) => {
       if (!user) throw new Error('Not authenticated')
       if (!enterpriseId) throw new Error('No enterprise membership found')
-      return createProduct(enterpriseId, user.id, form)
+      return createProductWithDefaultVariety(enterpriseId, user.id, form, settings ?? undefined)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
-      toast.success('Product created')
+      toast.success('Product created with default variety')
     },
     onError: (error: Error) => toast.error(error.message),
   })
@@ -186,10 +189,12 @@ export function useCreateVariety() {
     mutationFn: ({
       productId,
       form,
+      sourceVarietyId,
     }: {
       productId: string
       form: ProductVarietyFormData
-    }) => createVariety(productId, form),
+      sourceVarietyId?: string
+    }) => createVariety(productId, form, sourceVarietyId),
     onSuccess: (_, { productId }) => {
       queryClient.invalidateQueries({ queryKey: ['products', productId] })
       queryClient.invalidateQueries({ queryKey: ['products'] })

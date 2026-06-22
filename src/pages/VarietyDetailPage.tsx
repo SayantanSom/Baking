@@ -37,7 +37,14 @@ import { AcceptVarietyDialog } from '@/components/products/AcceptVarietyDialog'
 import { ACCEPTANCE_REASON_OPTIONS } from '@/types/database'
 import { isCostLocked, isPriceLocked } from '@/lib/varietyLocks'
 import { formatCurrency, formatUnitCost, formatDate, formatDateTime } from '@/lib/utils'
-import type { IngredientUnit } from '@/types/database'
+import { getVarietyReviewStatus } from '@/lib/bufferStatus'
+import type { CostStatus, IngredientUnit } from '@/types/database'
+
+function worstReviewStatus(a: CostStatus, b: CostStatus): CostStatus {
+  if (a === 'red' || b === 'red') return 'red'
+  if (a === 'amber' || b === 'amber') return 'amber'
+  return 'green'
+}
 
 export function VarietyDetailPage() {
   const { productId, varietyId } = useParams<{ productId: string; varietyId: string }>()
@@ -89,7 +96,10 @@ export function VarietyDetailPage() {
     variety.recipe_yield,
     taxPercentage
   )
-  const latestCostStatus = costHistory?.[0]?.status
+  const review = getVarietyReviewStatus(variety, latestAcceptance)
+  const positionStatus = review
+    ? worstReviewStatus(review.costStatus, review.marginStatus)
+    : null
 
   const usedIds = new Set(variety.product_variety_ingredients.map((i) => i.ingredient_id))
   const available = (ingredients ?? []).filter((i) => !usedIds.has(i.id))
@@ -142,7 +152,7 @@ export function VarietyDetailPage() {
 
       <TabPanel active={tab} id="overview">
         <div className="mb-4 flex flex-wrap gap-2">
-          {latestCostStatus && <StatusBadge status={latestCostStatus} />}
+          {positionStatus && <StatusBadge status={positionStatus} />}
           {isPriceLocked(variety) && variety.price_locked_until && (
             <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800">
               Price protected until {formatDate(variety.price_locked_until)}

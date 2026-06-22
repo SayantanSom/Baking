@@ -97,19 +97,6 @@ async function insertAcceptanceSnapshot(
   return data
 }
 
-export async function createInitialAcceptance(
-  varietyId: string,
-  userId: string
-): Promise<ProductVarietyAcceptance | null> {
-  const variety = await fetchVarietyWithRecipe(varietyId)
-  if (variety.current_cost_price <= 0) return null
-
-  const existing = await fetchLatestAcceptance(varietyId)
-  if (existing) return existing
-
-  return insertAcceptanceSnapshot(variety, userId, 'initial_baseline')
-}
-
 export async function acceptVarietyCost(
   varietyId: string,
   form: AcceptVarietyFormData

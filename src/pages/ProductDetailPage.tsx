@@ -19,6 +19,7 @@ import {
   useSaveRecipeVersionAsNew,
   useSetCurrentRecipeVersion,
   useEnsureRecipeVersion,
+  useVariety,
 } from '@/hooks/useProducts'
 import { useIngredients } from '@/hooks/useIngredients'
 import { useSettings } from '@/hooks/useSettings'
@@ -34,23 +35,33 @@ import { BufferSlider } from '@/components/ui/BufferSlider'
 import { formatCurrency } from '@/lib/utils'
 import { emptyVarietyForm, mapVarietyToForm, newVarietyFormDefaults } from '@/lib/varietyForm'
 
+function varietyLabel(v: ProductVariety): string {
+  return [v.size_label, v.variety_name].filter(Boolean).join(' ') || v.variety_name
+}
+
 function VarietyFormDialog({
   open,
   onClose,
   productId,
   variety,
   baseLines,
+  varieties,
 }: {
   open: boolean
   onClose: () => void
   productId: string
   variety?: ProductVariety
   baseLines: { name: string; qty: number; unit: string; scaling: RecipeScalingMode }[]
+  varieties: ProductVariety[]
 }) {
   const createMutation = useCreateVariety()
   const updateMutation = useUpdateVariety()
   const { data: settings } = useSettings()
   const isEditing = Boolean(variety)
+  const [recipeSource, setRecipeSource] = useState<'base' | string>('base')
+
+  const sourceVarietyId = !isEditing && recipeSource !== 'base' ? recipeSource : ''
+  const { data: sourceVariety } = useVariety(sourceVarietyId)
 
   const { register, handleSubmit, watch, reset, setValue } = useForm<ProductVarietyFormData>({
     defaultValues: emptyVarietyForm,
@@ -63,26 +74,52 @@ function VarietyFormDialog({
           ? mapVarietyToForm(variety)
           : newVarietyFormDefaults(settings)
       )
+      if (!variety) {
+        setRecipeSource(baseLines.length > 0 ? 'base' : varieties[0]?.id ?? 'base')
+      }
     }
-  }, [open, variety, settings, reset])
+  }, [open, variety, settings, reset, baseLines.length, varieties])
 
   const factor = watch('base_recipe_factor') ?? 1
   const bufferValue = watch('buffer_percentage') ?? 5
 
-  const preview = useMemo(
-    () =>
-      baseLines.map((l) => ({
-        ...l,
+  const preview = useMemo(() => {
+    if (recipeSource === 'base') {
+      return baseLines.map((l) => ({
+        name: l.name,
+        qty: l.qty,
+        unit: l.unit,
         scaled: scaleQuantity(l.qty, factor, l.scaling),
-      })),
-    [baseLines, factor]
-  )
+      }))
+    }
+    return (sourceVariety?.product_variety_ingredients ?? []).map((l) => ({
+      name: l.ingredient?.name ?? 'Ingredient',
+      qty: l.quantity_used,
+      unit: l.unit,
+      scaled: l.quantity_used * factor,
+    }))
+  }, [recipeSource, baseLines, sourceVariety, factor])
+
+  const sourceOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = []
+    if (baseLines.length > 0) {
+      options.push({ value: 'base', label: 'Base recipe (current)' })
+    }
+    for (const v of varieties) {
+      options.push({ value: v.id, label: varietyLabel(v) })
+    }
+    return options
+  }, [baseLines.length, varieties])
 
   const onSubmit = async (form: ProductVarietyFormData) => {
     if (isEditing && variety) {
       await updateMutation.mutateAsync({ id: variety.id, form })
     } else {
-      await createMutation.mutateAsync({ productId, form })
+      await createMutation.mutateAsync({
+        productId,
+        form,
+        sourceVarietyId: recipeSource === 'base' ? undefined : recipeSource,
+      })
     }
     reset(newVarietyFormDefaults(settings))
     onClose()
@@ -92,9 +129,17 @@ function VarietyFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={isEditing ? 'Edit Variety' : 'Create Variety from Base Recipe'}
+      title={isEditing ? 'Edit Variety' : 'Create Variety'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {!isEditing && sourceOptions.length > 0 && (
+          <Select
+            label="Copy recipe from"
+            value={recipeSource}
+            onChange={(e) => setRecipeSource(e.target.value)}
+            options={sourceOptions}
+          />
+        )}
         <Input label="Variety Name" {...register('variety_name', { required: true })} />
         <Input label="Size Label" {...register('size_label')} placeholder="e.g. 8 inch" />
         <Input label="SKU" {...register('sku')} />
@@ -106,7 +151,7 @@ function VarietyFormDialog({
           <Input label="Shipping Cost" type="number" step="0.01" {...register('shipping_cost', { valueAsNumber: true })} />
           {!isEditing && (
             <Input
-              label="Base Recipe Factor"
+              label="Recipe factor"
               type="number"
               step="0.1"
               {...register('base_recipe_factor', { valueAsNumber: true })}
@@ -143,7 +188,7 @@ function VarietyFormDialog({
         <div className="flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit" loading={createMutation.isPending || updateMutation.isPending}>
-            {isEditing ? 'Save' : 'Create from Base Recipe'}
+            {isEditing ? 'Save' : 'Create Variety'}
           </Button>
         </div>
       </form>
@@ -204,7 +249,9 @@ export function ProductDetailPage() {
     ) ?? 0
 
   const varieties = product.product_varieties ?? []
-  const canCreateVariety = (currentVersion?.product_base_recipe_ingredients?.length ?? 0) > 0
+  const canCreateVariety =
+    (currentVersion?.product_base_recipe_ingredients?.length ?? 0) > 0 ||
+    varieties.length > 0
 
   const handleAddBaseIngredient = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -375,14 +422,14 @@ export function ProductDetailPage() {
         <div className="mb-4 flex justify-between">
           <p className="text-sm text-slate-500">
             {canCreateVariety
-              ? 'Create varieties from the current base recipe. Set packaging, labour, and shipping overheads when creating or editing a variety.'
-              : 'Add a base recipe before creating varieties'}
+              ? 'Create varieties from the base recipe or copy an existing variety. Set packaging, labour, and shipping when creating or editing.'
+              : 'Add a base recipe or create a first variety before adding more'}
           </p>
           <Button
             disabled={!canCreateVariety}
             onClick={() => { setEditing(undefined); setFormOpen(true) }}
           >
-            <Plus className="h-4 w-4" /> Create from Base Recipe
+            <Plus className="h-4 w-4" /> Create Variety
           </Button>
         </div>
         <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
@@ -446,6 +493,7 @@ export function ProductDetailPage() {
         productId={product.id}
         variety={editing}
         baseLines={baseLines}
+        varieties={varieties}
       />
 
       <Dialog open={showNewVersion} onClose={() => setShowNewVersion(false)} title="Save as new version">

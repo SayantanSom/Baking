@@ -357,6 +357,12 @@ export interface ProductFormData {
   image_url: string
 }
 
+/** Fields used only when creating a product (default first variety). */
+export interface ProductCreateFormData extends ProductFormData {
+  recipe_yield: number
+  selling_price: number
+}
+
 export interface ProductVarietyFormData {
   variety_name: string
   size_label: string

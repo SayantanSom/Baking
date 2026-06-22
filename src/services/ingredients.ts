@@ -12,6 +12,7 @@ import {
   getCostStatus,
 } from '@/lib/utils'
 import { recalculateAffectedVarieties } from './costMonitoring'
+import { ConflictError } from '@/lib/errors'
 
 const INGREDIENT_SELECT = `
   *,
@@ -89,8 +90,6 @@ export async function fetchIngredient(id: string): Promise<Ingredient> {
   return data
 }
 
-import { ConflictError } from '@/lib/errors'
-
 export async function createIngredient(
   enterpriseId: string,
   createdBy: string,
@@ -159,6 +158,29 @@ export async function fetchVendorPrices(
   return data ?? []
 }
 
+/** When an ingredient has exactly one supplier, it must be active for recipe costing. */
+export async function ensureSingletonVendorIsActive(
+  ingredientId: string
+): Promise<boolean> {
+  const prices = await fetchVendorPrices(ingredientId)
+  if (prices.length !== 1) return false
+
+  const only = prices[0]
+  const { data: ingredient, error } = await supabase
+    .from('ingredients')
+    .select('active_vendor_price_id')
+    .eq('id', ingredientId)
+    .single()
+
+  if (error) throw error
+  if (only.is_active && ingredient.active_vendor_price_id === only.id) {
+    return false
+  }
+
+  await setActiveVendorPrice(ingredientId, only.id)
+  return true
+}
+
 export async function fetchIngredientVendorCounts(): Promise<Record<string, number>> {
   const { data, error } = await supabase
     .from('ingredient_vendor_prices')
@@ -178,6 +200,8 @@ export async function createVendorPrice(
   form: VendorPriceFormData,
   baseUnit: string
 ): Promise<{ vendor: IngredientVendorPrice; affectedCount: number }> {
+  const existing = await fetchVendorPrices(ingredientId)
+  const isFirstSupplier = existing.length === 0
   const costPerBaseUnit = calculateCostPerBaseUnit(
     form.pack_cost,
     form.pack_size,
@@ -194,7 +218,7 @@ export async function createVendorPrice(
       pack_unit: form.pack_unit,
       pack_cost: form.pack_cost,
       cost_per_base_unit: costPerBaseUnit,
-      is_active: form.is_active,
+      is_active: form.is_active || isFirstSupplier,
       product_url: form.product_url.trim() || null,
       last_checked_at: form.last_checked_at ?? new Date().toISOString(),
     })
@@ -204,7 +228,7 @@ export async function createVendorPrice(
   if (error) throw error
 
   let affectedCount = 0
-  if (form.is_active) {
+  if (form.is_active || isFirstSupplier) {
     affectedCount = await setActiveVendorPrice(ingredientId, data.id)
   }
 
@@ -288,6 +312,8 @@ export async function deleteVendorPrice(
     .eq('id', id)
 
   if (error) throw error
+
+  await ensureSingletonVendorIsActive(ingredientId)
 }
 
 export async function setActiveVendorPrice(
@@ -295,7 +321,14 @@ export async function setActiveVendorPrice(
   vendorPriceId: string,
   previousActiveCost?: number
 ): Promise<number> {
-  const ingredient = await fetchIngredient(ingredientId)
+  const { data: ingredient, error: ingredientError } = await supabase
+    .from('ingredients')
+    .select(INGREDIENT_SELECT)
+    .eq('id', ingredientId)
+    .single()
+
+  if (ingredientError) throw ingredientError
+
   const prices = await fetchVendorPrices(ingredientId)
   const newPrice = prices.find((p) => p.id === vendorPriceId)
   if (!newPrice) throw new Error('Vendor price not found')

@@ -70,7 +70,8 @@ export function getCurrentRecipeVersion(
 }
 
 export async function ensureCurrentRecipeVersion(
-  productId: string
+  productId: string,
+  recipeYield = 1
 ): Promise<ProductRecipeVersion> {
   const product = await fetchProductWithRecipeVersions(productId)
   const current = getCurrentRecipeVersion(product)
@@ -84,7 +85,7 @@ export async function ensureCurrentRecipeVersion(
       product_id: productId,
       version_number: 1,
       name: 'Original Recipe',
-      recipe_yield: 1,
+      recipe_yield: Math.max(1, recipeYield),
       is_current: true,
       created_by: createdBy,
     })

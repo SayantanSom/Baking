@@ -13,7 +13,7 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from '@/hooks/useProducts'
-import type { Product, ProductFormData, ProductWithVarieties } from '@/types/database'
+import type { Product, ProductCreateFormData, ProductWithVarieties } from '@/types/database'
 import { cn } from '@/lib/utils'
 
 function ProductFormDialog({
@@ -29,8 +29,15 @@ function ProductFormDialog({
   const updateMutation = useUpdateProduct()
   const isEditing = Boolean(product)
 
-  const { register, handleSubmit, reset } = useForm<ProductFormData>({
-    defaultValues: { name: '', description: '', category: '', image_url: '' },
+  const { register, handleSubmit, reset } = useForm<ProductCreateFormData>({
+    defaultValues: {
+      name: '',
+      description: '',
+      category: '',
+      image_url: '',
+      recipe_yield: 1,
+      selling_price: 0,
+    },
   })
 
   useEffect(() => {
@@ -42,13 +49,22 @@ function ProductFormDialog({
               description: product.description || '',
               category: product.category || '',
               image_url: product.image_url || '',
+              recipe_yield: 1,
+              selling_price: 0,
             }
-          : { name: '', description: '', category: '', image_url: '' }
+          : {
+              name: '',
+              description: '',
+              category: '',
+              image_url: '',
+              recipe_yield: 1,
+              selling_price: 0,
+            }
       )
     }
   }, [open, product, reset])
 
-  const onSubmit = async (form: ProductFormData) => {
+  const onSubmit = async (form: ProductCreateFormData) => {
     if (isEditing && product) {
       await updateMutation.mutateAsync({
         id: product.id,
@@ -72,6 +88,27 @@ function ProductFormDialog({
           <textarea {...register('description')} rows={3} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900" />
         </div>
         <Input label="Image URL" type="url" {...register('image_url')} />
+        {!isEditing && (
+          <>
+            <Input
+              label="Batch / pack size (recipe yield)"
+              type="number"
+              min={1}
+              step={1}
+              {...register('recipe_yield', { valueAsNumber: true, min: 1, required: true })}
+            />
+            <p className="text-xs text-slate-500">
+              Units per batch (e.g. 6 for a 6-pack). Creates the base recipe and first variety.
+            </p>
+            <Input
+              label="Selling price of the pack"
+              type="number"
+              min={0}
+              step={0.01}
+              {...register('selling_price', { valueAsNumber: true, min: 0 })}
+            />
+          </>
+        )}
         <div className="flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit" loading={createMutation.isPending || updateMutation.isPending}>

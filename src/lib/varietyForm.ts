@@ -27,6 +27,26 @@ export function newVarietyFormDefaults(settings?: {
   }
 }
 
+export function defaultVarietyFromProductCreate(
+  productName: string,
+  recipeYield: number,
+  sellingPrice: number,
+  settings?: {
+    default_labour_cost?: number
+    default_packaging_cost?: number
+    default_buffer_percentage?: number
+  }
+): ProductVarietyFormData {
+  const yieldValue = Math.max(1, recipeYield)
+  return {
+    ...newVarietyFormDefaults(settings),
+    variety_name: productName.trim(),
+    size_label: yieldValue > 1 ? `${yieldValue} pack` : '',
+    selling_price: sellingPrice,
+    recipe_yield: yieldValue,
+  }
+}
+
 export function mapVarietyToForm(v: ProductVariety): ProductVarietyFormData {
   return {
     variety_name: v.variety_name,

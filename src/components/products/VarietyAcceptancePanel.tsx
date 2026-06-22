@@ -101,7 +101,7 @@ export function VarietyAcceptancePanel({
         )}
       </div>
 
-      {acceptance && (
+      {acceptance ? (
         <div className="mt-3 text-sm text-slate-500">
           <p>Last accepted: {formatDate(acceptance.accepted_at)}</p>
           <p>Reason: {reasonLabel(acceptance.accepted_reason_type)}</p>
@@ -109,6 +109,11 @@ export function VarietyAcceptancePanel({
             <p>Notes: {acceptance.accepted_reason_notes}</p>
           )}
         </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">
+          No baseline yet. Finish the recipe and production overheads, then use{' '}
+          <strong>Accept Cost</strong> to lock in your starting position.
+        </p>
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">

@@ -60,6 +60,7 @@ export function VendorPriceFormDialog({
   onClose,
   ingredient,
   vendor,
+  isFirstVendor = false,
   onSubmit,
   loading,
 }: {
@@ -67,6 +68,7 @@ export function VendorPriceFormDialog({
   onClose: () => void
   ingredient: Ingredient
   vendor?: IngredientVendorPrice
+  isFirstVendor?: boolean
   onSubmit: (form: VendorPriceFormData) => Promise<void>
   loading?: boolean
 }) {
@@ -87,10 +89,11 @@ export function VendorPriceFormDialog({
               ...emptyForm,
               pack_unit: ingredient.base_unit,
               last_checked_at: todayLocalDatetime(),
+              is_active: isFirstVendor,
             }
       )
     }
-  }, [open, vendor, ingredient.base_unit, reset])
+  }, [open, vendor, ingredient.base_unit, isFirstVendor, reset])
 
   const packCost = watch('pack_cost')
   const packSize = watch('pack_size')
