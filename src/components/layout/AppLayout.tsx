@@ -9,25 +9,33 @@ import {
   Sun,
   Menu,
   X,
+  UserCheck,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
+import { usePendingAppUsers } from '@/hooks/useUsers'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/ingredients', label: 'Ingredients', icon: Carrot },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/settings', label: 'Settings', icon: Settings },
-]
-
 export function AppLayout() {
-  const { signOut, user } = useAuth()
+  const { signOut, user, isSuperAdmin } = useAuth()
+  const { data: pendingUsers } = usePendingAppUsers(isSuperAdmin)
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const pendingCount = pendingUsers?.length ?? 0
+
+  const navItems = [
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/ingredients', label: 'Ingredients', icon: Carrot },
+    { to: '/products', label: 'Products', icon: Package },
+    { to: '/settings', label: 'Settings', icon: Settings },
+    ...(isSuperAdmin
+      ? [{ to: '/admin/users', label: 'Users', icon: UserCheck, badge: pendingCount }]
+      : []),
+  ]
 
   const handleSignOut = async () => {
     await signOut()
@@ -46,7 +54,7 @@ export function AppLayout() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, label, icon: Icon, badge }) => (
           <NavLink
             key={to}
             to={to}
@@ -62,7 +70,12 @@ export function AppLayout() {
             }
           >
             <Icon className="h-5 w-5" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {badge != null && badge > 0 && (
+              <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white">
+                {badge}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

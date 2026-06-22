@@ -3,10 +3,11 @@ import type { CostStatus } from '@/types/database'
 
 interface StatusBadgeProps {
   status: CostStatus
+  label?: string
   className?: string
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, label, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
@@ -15,7 +16,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         className
       )}
     >
-      {getStatusLabel(status)}
+      {label ?? getStatusLabel(status)}
     </span>
   )
 }

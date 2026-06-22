@@ -1,19 +1,28 @@
 import { supabase } from './supabase'
-import { recalculateProductCost } from './products'
+import { recalculateVarietyCost } from './products'
+import { recalculateRecipeVersionsUsingIngredient } from './recipeVersions'
 
-export async function recalculateAffectedProducts(
+export async function recalculateAffectedVarieties(
   ingredientId: string
-): Promise<void> {
+): Promise<number> {
   const { data, error } = await supabase
-    .from('product_ingredients')
-    .select('product_id')
+    .from('product_variety_ingredients')
+    .select('product_variety_id')
     .eq('ingredient_id', ingredientId)
 
   if (error) throw error
 
-  const productIds = [...new Set((data ?? []).map((r) => r.product_id))]
+  const varietyIds = [...new Set((data ?? []).map((r) => r.product_variety_id))]
 
-  for (const productId of productIds) {
-    await recalculateProductCost(productId, true)
+  for (const varietyId of varietyIds) {
+    await recalculateVarietyCost(
+      varietyId,
+      true,
+      'Ingredient vendor price changed'
+    )
   }
+
+  await recalculateRecipeVersionsUsingIngredient(ingredientId)
+
+  return varietyIds.length
 }

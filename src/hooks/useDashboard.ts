@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchIngredients } from '@/services/ingredients'
-import { fetchProducts, fetchAllCostHistory } from '@/services/products'
-import { fetchProductsRequiringReview } from '@/services/products'
-import { fetchRecentlyUpdatedIngredients } from '@/services/ingredients'
+import { fetchIngredients, fetchRecentlyUpdatedIngredients } from '@/services/ingredients'
+import { fetchProducts, fetchAllVarietyCostHistory } from '@/services/products'
+import { fetchVarietiesRequiringReview } from '@/services/products'
 
 export function useDashboardData() {
   const ingredients = useQuery({
@@ -20,41 +19,48 @@ export function useDashboardData() {
     queryFn: () => fetchRecentlyUpdatedIngredients(5),
   })
 
-  const reviewProducts = useQuery({
-    queryKey: ['products', 'review'],
-    queryFn: fetchProductsRequiringReview,
+  const reviewVarieties = useQuery({
+    queryKey: ['varieties', 'review'],
+    queryFn: fetchVarietiesRequiringReview,
   })
 
   const costHistory = useQuery({
     queryKey: ['dashboard', 'cost-history'],
-    queryFn: fetchAllCostHistory,
+    queryFn: fetchAllVarietyCostHistory,
   })
 
   const isLoading =
     ingredients.isLoading ||
     products.isLoading ||
     recentIngredients.isLoading ||
-    reviewProducts.isLoading ||
+    reviewVarieties.isLoading ||
     costHistory.isLoading
 
-  const productsOverBuffer =
-    reviewProducts.data?.filter((p) => p.latest_status === 'red').length ?? 0
+  const varietiesOverBuffer =
+    reviewVarieties.data?.filter(
+      (v) => v.costStatus === 'red' || v.marginStatus === 'red'
+    ).length ?? 0
 
-  const productsNearBuffer =
-    reviewProducts.data?.filter((p) => p.latest_status === 'amber').length ?? 0
+  const varietiesNearBuffer =
+    reviewVarieties.data?.filter(
+      (v) =>
+        (v.costStatus === 'amber' || v.marginStatus === 'amber') &&
+        v.costStatus !== 'red' &&
+        v.marginStatus !== 'red'
+    ).length ?? 0
 
   return {
     ingredients: ingredients.data ?? [],
     products: products.data ?? [],
     recentIngredients: recentIngredients.data ?? [],
-    reviewProducts: reviewProducts.data ?? [],
+    reviewVarieties: reviewVarieties.data ?? [],
     costHistory: costHistory.data ?? [],
     isLoading,
     stats: {
       totalIngredients: ingredients.data?.length ?? 0,
       totalProducts: products.data?.length ?? 0,
-      productsOverBuffer,
-      productsNearBuffer,
+      productsOverBuffer: varietiesOverBuffer,
+      productsNearBuffer: varietiesNearBuffer,
     },
   }
 }

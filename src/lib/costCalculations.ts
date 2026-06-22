@@ -1,46 +1,84 @@
 import type {
-  ProductIngredient,
-  ProductCostBreakdown,
-  UserSettings,
+  ProductVarietyIngredient,
+  VarietyCostBreakdown,
+  Ingredient,
+  IngredientVendorPrice,
 } from '@/types/database'
+import { convertToBaseUnit } from './unitConversion'
 
-export function calculateProductCost(
-  recipe: ProductIngredient[],
-  bufferPercentage: number,
-  unitsPerBatch: number,
-  settings?: Pick<
-    UserSettings,
-    'labour_cost_percentage' | 'packaging_cost_percentage' | 'tax_percentage'
-  >
-): ProductCostBreakdown {
+export function getIngredientLineCost(
+  quantityUsed: number,
+  unit: string,
+  ingredient: Ingredient | undefined,
+  vendorPrice: IngredientVendorPrice | undefined
+): number {
+  if (!ingredient || !vendorPrice) return 0
+  try {
+    const baseQty = convertToBaseUnit(
+      quantityUsed,
+      unit as Ingredient['base_unit'],
+      ingredient.base_unit
+    )
+    return baseQty * vendorPrice.cost_per_base_unit
+  } catch {
+    return 0
+  }
+}
+
+export function calculateVarietyCost(
+  recipe: ProductVarietyIngredient[],
+  packagingCost: number,
+  labourCost: number,
+  shippingCost: number,
+  sellingPrice: number,
+  recipeYield = 1,
+  taxPercentage = 0
+): VarietyCostBreakdown {
   const ingredientCost = recipe.reduce((sum, item) => {
-    const unitCost = item.ingredient?.unit_cost ?? 0
-    return sum + item.quantity_used * unitCost
+    const vendorPrice =
+      item.vendor_price ??
+      item.ingredient?.active_vendor_price
+    return (
+      sum +
+      getIngredientLineCost(
+        item.quantity_used,
+        item.unit,
+        item.ingredient,
+        vendorPrice
+      )
+    )
   }, 0)
 
-  const costPrice = ingredientCost
-  const labourCost = settings
-    ? costPrice * (settings.labour_cost_percentage / 100)
-    : 0
-  const packagingCost = settings
-    ? costPrice * (settings.packaging_cost_percentage / 100)
-    : 0
-  const subtotal = costPrice + labourCost + packagingCost
-  const bufferedCost = subtotal * (1 + bufferPercentage / 100)
-  const costPerUnit = unitsPerBatch > 0 ? bufferedCost / unitsPerBatch : bufferedCost
-  const taxAmount = settings
-    ? bufferedCost * (settings.tax_percentage / 100)
-    : 0
-  const totalWithTax = bufferedCost + taxAmount
+  const overheadCost = packagingCost + labourCost + shippingCost
+  const totalCost = ingredientCost + overheadCost
+  const netRevenue =
+    taxPercentage > 0
+      ? sellingPrice / (1 + taxPercentage / 100)
+      : sellingPrice
+  const taxOnSale = sellingPrice - netRevenue
+  const grossMarginPreTax = sellingPrice - totalCost
+  const grossMarginPostTax = netRevenue - totalCost
+  const grossMarginPreTaxPercentage =
+    sellingPrice > 0 ? (grossMarginPreTax / sellingPrice) * 100 : 0
+  const grossMarginPostTaxPercentage =
+    netRevenue > 0 ? (grossMarginPostTax / netRevenue) * 100 : 0
+  const costPerUnit = recipeYield > 0 ? totalCost / recipeYield : totalCost
 
   return {
     ingredientCost,
-    costPrice,
-    bufferedCost,
-    costPerUnit,
-    labourCost,
     packagingCost,
-    taxAmount,
-    totalWithTax,
+    labourCost,
+    shippingCost,
+    overheadCost,
+    totalCost,
+    netRevenue,
+    taxOnSale,
+    grossMarginPreTax,
+    grossMarginPreTaxPercentage,
+    grossMarginPostTax,
+    grossMarginPostTaxPercentage,
+    grossMargin: grossMarginPreTax,
+    grossMarginPercentage: grossMarginPreTaxPercentage,
+    costPerUnit,
   }
 }

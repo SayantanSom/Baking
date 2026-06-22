@@ -1,6 +1,6 @@
 import type { Retailer } from '@/types/database'
 
-const RETAILER_SEARCH_URLS: Record<Retailer, (query: string) => string> = {
+const RETAILER_SEARCH_URLS: Partial<Record<Retailer, (query: string) => string>> = {
   Amazon: (q) =>
     `https://www.amazon.co.uk/s?k=${encodeURIComponent(q)}`,
   "Sainsbury's": (q) =>
@@ -12,7 +12,7 @@ const RETAILER_SEARCH_URLS: Record<Retailer, (query: string) => string> = {
   Tesco: (q) =>
     `https://www.tesco.com/groceries/en-GB/search?query=${encodeURIComponent(q)}`,
   Aldi: (q) =>
-    `https://www.aldi.co.uk/results?query=${encodeURIComponent(q)}`,
+    `https://www.aldi.co.uk/results?q=${encodeURIComponent(q)}`,
 }
 
 export const RETAILERS: Retailer[] = [
@@ -28,13 +28,17 @@ export function getRetailerSearchUrl(
   retailer: Retailer,
   ingredientName: string
 ): string {
-  return RETAILER_SEARCH_URLS[retailer](ingredientName)
+  const fn = RETAILER_SEARCH_URLS[retailer]
+  if (!fn) return '#'
+  return fn(ingredientName)
 }
 
 export function openRetailerSearch(
-  retailer: Retailer,
+  retailer: string,
   ingredientName: string
 ): void {
-  const url = getRetailerSearchUrl(retailer, ingredientName)
+  const known = RETAILERS.find((r) => r === retailer)
+  if (!known) return
+  const url = getRetailerSearchUrl(known, ingredientName)
   window.open(url, '_blank', 'noopener,noreferrer')
 }

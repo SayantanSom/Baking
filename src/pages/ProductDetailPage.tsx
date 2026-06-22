@@ -1,383 +1,484 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import { useState, useEffect, useMemo } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { ArrowLeft, Plus, Pencil, Trash2, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { CostDisplay } from '@/components/ui/StatCard'
-import { StatusBadge } from '@/components/ui/StatusBadge'
+import { Dialog, ConfirmDialog } from '@/components/ui/Dialog'
 import { PageLoader } from '@/components/ui/LoadingSpinner'
-import { ConfirmDialog } from '@/components/ui/Dialog'
+import { Tabs, TabPanel } from '@/components/ui/Tabs'
 import {
   useProduct,
-  useCostHistory,
-  useAddProductIngredient,
-  useUpdateProductIngredient,
-  useRemoveProductIngredient,
+  useCreateVariety,
+  useUpdateVariety,
+  useDeleteVariety,
+  useProductRecipeVersions,
+  useAddBaseRecipeIngredient,
+  useRemoveBaseRecipeIngredient,
+  useSaveRecipeVersionAsNew,
+  useSetCurrentRecipeVersion,
+  useEnsureRecipeVersion,
 } from '@/hooks/useProducts'
 import { useIngredients } from '@/hooks/useIngredients'
 import { useSettings } from '@/hooks/useSettings'
-import { calculateProductCost } from '@/lib/costCalculations'
-import { formatCurrency, formatUnitCost, formatDate, formatDateTime } from '@/lib/utils'
+import { getCurrentRecipeVersion } from '@/services/recipeVersions'
+import { scaleQuantity } from '@/lib/recipeScaling'
+import type {
+  ProductVariety,
+  ProductVarietyFormData,
+  IngredientUnit,
+  RecipeScalingMode,
+} from '@/types/database'
+import { BufferSlider } from '@/components/ui/BufferSlider'
+import { formatCurrency } from '@/lib/utils'
+import { emptyVarietyForm, mapVarietyToForm, newVarietyFormDefaults } from '@/lib/varietyForm'
+
+function VarietyFormDialog({
+  open,
+  onClose,
+  productId,
+  variety,
+  baseLines,
+}: {
+  open: boolean
+  onClose: () => void
+  productId: string
+  variety?: ProductVariety
+  baseLines: { name: string; qty: number; unit: string; scaling: RecipeScalingMode }[]
+}) {
+  const createMutation = useCreateVariety()
+  const updateMutation = useUpdateVariety()
+  const { data: settings } = useSettings()
+  const isEditing = Boolean(variety)
+
+  const { register, handleSubmit, watch, reset, setValue } = useForm<ProductVarietyFormData>({
+    defaultValues: emptyVarietyForm,
+  })
+
+  useEffect(() => {
+    if (open) {
+      reset(
+        variety
+          ? mapVarietyToForm(variety)
+          : newVarietyFormDefaults(settings)
+      )
+    }
+  }, [open, variety, settings, reset])
+
+  const factor = watch('base_recipe_factor') ?? 1
+  const bufferValue = watch('buffer_percentage') ?? 5
+
+  const preview = useMemo(
+    () =>
+      baseLines.map((l) => ({
+        ...l,
+        scaled: scaleQuantity(l.qty, factor, l.scaling),
+      })),
+    [baseLines, factor]
+  )
+
+  const onSubmit = async (form: ProductVarietyFormData) => {
+    if (isEditing && variety) {
+      await updateMutation.mutateAsync({ id: variety.id, form })
+    } else {
+      await createMutation.mutateAsync({ productId, form })
+    }
+    reset(newVarietyFormDefaults(settings))
+    onClose()
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={isEditing ? 'Edit Variety' : 'Create Variety from Base Recipe'}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input label="Variety Name" {...register('variety_name', { required: true })} />
+        <Input label="Size Label" {...register('size_label')} placeholder="e.g. 8 inch" />
+        <Input label="SKU" {...register('sku')} />
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Selling Price" type="number" step="0.01" {...register('selling_price', { valueAsNumber: true })} />
+          <Input label="Recipe Yield" type="number" min="1" {...register('recipe_yield', { valueAsNumber: true })} />
+          <Input label="Packaging Cost" type="number" step="0.01" {...register('packaging_cost', { valueAsNumber: true })} />
+          <Input label="Labour Cost" type="number" step="0.01" {...register('labour_cost', { valueAsNumber: true })} />
+          <Input label="Shipping Cost" type="number" step="0.01" {...register('shipping_cost', { valueAsNumber: true })} />
+          {!isEditing && (
+            <Input
+              label="Base Recipe Factor"
+              type="number"
+              step="0.1"
+              {...register('base_recipe_factor', { valueAsNumber: true })}
+            />
+          )}
+        </div>
+        <BufferSlider
+          label="Cost buffer %"
+          value={bufferValue}
+          onChange={(v) => setValue('buffer_percentage', v)}
+        />
+        <input type="hidden" {...register('buffer_percentage', { valueAsNumber: true })} />
+        {!isEditing && preview.length > 0 && (
+          <div className="rounded border p-3 text-sm dark:border-slate-700">
+            <p className="mb-2 font-medium">Recipe preview (factor {factor})</p>
+            <table className="w-full">
+              <tbody>
+                {preview.map((p) => (
+                  <tr key={p.name}>
+                    <td className="py-1">{p.name}</td>
+                    <td className="py-1 text-right">
+                      {p.qty} {p.unit} → {p.scaled.toFixed(2)} {p.unit}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" {...register('is_catalogue_visible')} />
+          Visible in catalogue
+        </label>
+        <div className="flex justify-end gap-3">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" loading={createMutation.isPending || updateMutation.isPending}>
+            {isEditing ? 'Save' : 'Create from Base Recipe'}
+          </Button>
+        </div>
+      </form>
+    </Dialog>
+  )
+}
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: product, isLoading } = useProduct(id!)
-  const { data: costHistory } = useCostHistory(id!)
+  const { data: recipeProduct, isLoading: recipeLoading } = useProductRecipeVersions(id!)
   const { data: ingredients } = useIngredients()
   const { data: settings } = useSettings()
+  const deleteMutation = useDeleteVariety()
+  const ensureVersion = useEnsureRecipeVersion()
+  const addBaseIng = useAddBaseRecipeIngredient()
+  const removeBaseIng = useRemoveBaseRecipeIngredient()
+  const saveVersion = useSaveRecipeVersionAsNew()
+  const setCurrent = useSetCurrentRecipeVersion()
 
-  const addMutation = useAddProductIngredient()
-  const removeMutation = useRemoveProductIngredient()
-  const updateMutation = useUpdateProductIngredient()
-
-  const [selectedIngredient, setSelectedIngredient] = useState('')
-  const [quantity, setQuantity] = useState('')
-  const [removeTarget, setRemoveTarget] = useState<{
-    id: string
-    name: string
-  } | null>(null)
+  const [tab, setTab] = useState('varieties')
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState<ProductVariety | undefined>()
+  const [deleteTarget, setDeleteTarget] = useState<ProductVariety | undefined>()
+  const [viewVersionId, setViewVersionId] = useState<string | null>(null)
+  const [newVersionName, setNewVersionName] = useState('')
+  const [showNewVersion, setShowNewVersion] = useState(false)
+  const [baseIngId, setBaseIngId] = useState('')
+  const [baseQty, setBaseQty] = useState('')
+  const [baseUnit, setBaseUnit] = useState<IngredientUnit>('g')
+  const [baseScaling, setBaseScaling] = useState<RecipeScalingMode>('proportional')
 
   const currency = settings?.currency ?? '£'
 
+  useEffect(() => {
+    if (id) ensureVersion.mutate(id)
+  }, [id])
+
   if (isLoading || !product) return <PageLoader />
 
-  const breakdown = calculateProductCost(
-    product.product_ingredients,
-    product.buffer_percentage,
-    product.units_per_batch,
-    settings
-  )
+  const versions = recipeProduct?.product_recipe_versions ?? []
+  const currentVersion = recipeProduct ? getCurrentRecipeVersion(recipeProduct) : undefined
+  const activeVersion =
+    versions.find((v) => v.id === viewVersionId) ?? currentVersion
+  const isCurrentEditable = activeVersion?.is_current ?? false
+  const baseLines =
+    activeVersion?.product_base_recipe_ingredients?.map((l) => ({
+      name: l.ingredient?.name ?? 'Ingredient',
+      qty: l.quantity_used,
+      unit: l.unit,
+      scaling: l.scaling_mode,
+    })) ?? []
 
-  const usedIngredientIds = new Set(
-    product.product_ingredients.map((pi) => pi.ingredient_id)
-  )
-  const availableIngredients = (ingredients ?? []).filter(
-    (i) => !usedIngredientIds.has(i.id)
-  )
+  const baseTotal =
+    activeVersion?.product_base_recipe_ingredients?.reduce(
+      (s, l) => s + l.calculated_cost,
+      0
+    ) ?? 0
 
-  const chartData = [...(costHistory ?? [])]
-    .reverse()
-    .map((entry) => ({
-      date: formatDate(entry.created_at),
-      cost: entry.new_cost,
-      change: entry.percentage_change,
-    }))
+  const varieties = product.product_varieties ?? []
+  const canCreateVariety = (currentVersion?.product_base_recipe_ingredients?.length ?? 0) > 0
 
-  const handleAddIngredient = async (e: React.FormEvent) => {
+  const handleAddBaseIngredient = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedIngredient || !quantity) return
-    await addMutation.mutateAsync({
+    if (!activeVersion || !baseIngId || !baseQty) return
+    await addBaseIng.mutateAsync({
+      versionId: activeVersion.id,
       productId: product.id,
-      ingredientId: selectedIngredient,
-      quantityUsed: parseFloat(quantity),
+      ingredientId: baseIngId,
+      quantityUsed: parseFloat(baseQty),
+      unit: baseUnit,
+      scalingMode: baseScaling,
     })
-    setSelectedIngredient('')
-    setQuantity('')
-  }
-
-  const handleQuantityChange = (itemId: string, newQty: number) => {
-    if (newQty > 0) {
-      updateMutation.mutate({
-        id: itemId,
-        quantityUsed: newQty,
-        productId: product.id,
-      })
-    }
+    setBaseIngId('')
+    setBaseQty('')
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link to="/products">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
+          <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4" /> Back</Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {product.name}
-          </h1>
-          {product.description && (
-            <p className="text-slate-500">{product.description}</p>
-          )}
+          <h1 className="text-2xl font-bold">{product.name}</h1>
+          {product.category && <p className="text-sm text-slate-400">{product.category}</p>}
         </div>
       </div>
 
-      {/* Cost Calculator */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <CostDisplay
-          label="Cost Price"
-          amount={breakdown.costPrice}
-          currency={currency}
-        />
-        <CostDisplay
-          label="Buffered Cost"
-          amount={breakdown.bufferedCost}
-          currency={currency}
-          highlight
-        />
-        <CostDisplay
-          label="Cost Per Unit"
-          amount={breakdown.costPerUnit}
-          currency={currency}
-        />
-        <CostDisplay
-          label="Ingredient Cost"
-          amount={breakdown.ingredientCost}
-          currency={currency}
-        />
-      </div>
+      <Tabs
+        tabs={[
+          { id: 'overview', label: 'Overview' },
+          { id: 'base', label: 'Base Recipe' },
+          { id: 'varieties', label: 'Varieties' },
+        ]}
+        active={tab}
+        onChange={setTab}
+      />
 
-      {/* Recipe Builder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recipe Builder</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form
-            onSubmit={handleAddIngredient}
-            className="flex flex-col gap-3 sm:flex-row sm:items-end"
-          >
-            <div className="flex-1">
-              <Select
-                label="Ingredient"
-                value={selectedIngredient}
-                onChange={(e) => setSelectedIngredient(e.target.value)}
-                options={[
-                  { value: '', label: 'Select ingredient...' },
-                  ...availableIngredients.map((i) => ({
-                    value: i.id,
-                    label: `${i.name} (${formatUnitCost(i.unit_cost, currency)}/${i.unit})`,
-                  })),
-                ]}
-              />
-            </div>
-            <div className="w-full sm:w-32">
-              <Input
-                label="Quantity"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={!selectedIngredient || !quantity}
-              loading={addMutation.isPending}
-            >
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
-          </form>
+      <TabPanel active={tab} id="overview">
+        {product.description && <p className="text-slate-600">{product.description}</p>}
+        <p className="text-sm text-slate-500">
+          Workflow: define base recipe → create varieties with a scaling factor → optionally override per variety.
+        </p>
+      </TabPanel>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-3 py-2 text-left">Ingredient</th>
-                  <th className="px-3 py-2 text-right">Qty</th>
-                  <th className="px-3 py-2 text-right">Unit Cost</th>
-                  <th className="px-3 py-2 text-right">Contribution</th>
-                  <th className="px-3 py-2 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {product.product_ingredients.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                      No ingredients in recipe yet
-                    </td>
-                  </tr>
-                ) : (
-                  product.product_ingredients.map((item) => {
-                    const unitCost = item.ingredient?.unit_cost ?? 0
-                    const contribution = item.quantity_used * unitCost
-                    return (
-                      <tr
-                        key={item.id}
-                        className="border-b border-slate-100 dark:border-slate-800"
-                      >
-                        <td className="px-3 py-2 font-medium">
-                          {item.ingredient?.name ?? 'Unknown'}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            defaultValue={item.quantity_used}
-                            onBlur={(e) =>
-                              handleQuantityChange(
-                                item.id,
-                                parseFloat(e.target.value)
-                              )
-                            }
-                            className="w-20 rounded border border-slate-300 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-800"
-                          />{' '}
-                          {item.ingredient?.unit}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {formatUnitCost(unitCost, currency)}
-                        </td>
-                        <td className="px-3 py-2 text-right font-medium text-emerald-600">
-                          {formatCurrency(contribution, currency)}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              setRemoveTarget({
-                                id: item.id,
-                                name: item.ingredient?.name ?? 'ingredient',
-                              })
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-              {product.product_ingredients.length > 0 && (
-                <tfoot>
-                  <tr className="font-semibold">
-                    <td colSpan={3} className="px-3 py-2 text-right">
-                      Total Ingredient Cost
-                    </td>
-                    <td className="px-3 py-2 text-right text-emerald-600">
-                      {formatCurrency(breakdown.ingredientCost, currency)}
-                    </td>
-                    <td />
-                  </tr>
-                </tfoot>
+      <TabPanel active={tab} id="base">
+        {recipeLoading ? (
+          <PageLoader />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {versions.map((v) => (
+                <Button
+                  key={v.id}
+                  size="sm"
+                  variant={activeVersion?.id === v.id ? 'primary' : 'outline'}
+                  onClick={() => setViewVersionId(v.id)}
+                >
+                  v{v.version_number} {v.name}
+                  {v.is_current && ' (Current)'}
+                </Button>
+              ))}
+              {activeVersion && !activeVersion.is_current && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setCurrent.mutate({ productId: product.id, versionId: activeVersion.id })
+                  }
+                >
+                  Set as current
+                </Button>
               )}
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cost History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cost History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {chartData.length > 0 && (
-            <div className="mb-6 h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(v) => `${currency}${v}`}
-                  />
-                  <Tooltip
-                    formatter={(value) => [
-                      formatCurrency(Number(value), currency),
-                      'Cost',
-                    ]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="cost"
-                    stroke="#16a34a"
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <Button size="sm" variant="ghost" onClick={() => setShowNewVersion(true)}>
+                Save as new version
+              </Button>
             </div>
-          )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-3 py-2 text-left">Date</th>
-                  <th className="px-3 py-2 text-right">Previous</th>
-                  <th className="px-3 py-2 text-right">New</th>
-                  <th className="px-3 py-2 text-right">Change</th>
-                  <th className="px-3 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(costHistory ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                      No cost changes recorded yet
+            {activeVersion && (
+              <>
+                <p className="text-sm text-slate-500">
+                  Yield: {activeVersion.recipe_yield} · Total cost: {formatCurrency(baseTotal, currency)}
+                  {!isCurrentEditable && ' · Read-only historical version'}
+                </p>
+
+                {isCurrentEditable && (
+                  <form onSubmit={handleAddBaseIngredient} className="flex flex-wrap items-end gap-2">
+                    <Select
+                      label="Ingredient"
+                      value={baseIngId}
+                      onChange={(e) => {
+                        setBaseIngId(e.target.value)
+                        const ing = ingredients?.find((i) => i.id === e.target.value)
+                        if (ing) setBaseUnit(ing.base_unit)
+                      }}
+                      options={[
+                        { value: '', label: 'Select...' },
+                        ...(ingredients ?? []).map((i) => ({ value: i.id, label: i.name })),
+                      ]}
+                    />
+                    <Input label="Qty" type="number" step="0.01" value={baseQty} onChange={(e) => setBaseQty(e.target.value)} />
+                    <Select label="Unit" value={baseUnit} onChange={(e) => setBaseUnit(e.target.value as IngredientUnit)} options={[
+                      { value: 'g', label: 'g' }, { value: 'kg', label: 'kg' },
+                      { value: 'ml', label: 'ml' }, { value: 'l', label: 'l' }, { value: 'unit', label: 'unit' },
+                    ]} />
+                    <Select label="Scaling" value={baseScaling} onChange={(e) => setBaseScaling(e.target.value as RecipeScalingMode)} options={[
+                      { value: 'proportional', label: 'Proportional' },
+                      { value: 'fixed', label: 'Fixed' },
+                    ]} />
+                    <Button type="submit" disabled={!baseIngId}>Add</Button>
+                  </form>
+                )}
+
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="py-2 text-left">Ingredient</th>
+                      <th className="py-2 text-right">Qty</th>
+                      <th className="py-2 text-left">Scaling</th>
+                      <th className="py-2 text-right">Cost</th>
+                      {isCurrentEditable && <th className="py-2" />}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(activeVersion.product_base_recipe_ingredients ?? []).length === 0 ? (
+                      <tr><td colSpan={5} className="py-6 text-center text-slate-500">Add ingredients to your base recipe</td></tr>
+                    ) : (
+                      (activeVersion.product_base_recipe_ingredients ?? []).map((line) => (
+                        <tr key={line.id} className="border-b">
+                          <td className="py-2">
+                            {line.ingredient_id ? (
+                              <Link
+                                to={`/ingredients/${line.ingredient_id}`}
+                                className="text-emerald-600 hover:underline"
+                              >
+                                {line.ingredient?.name}
+                              </Link>
+                            ) : (
+                              line.ingredient?.name
+                            )}
+                          </td>
+                          <td className="py-2 text-right">{line.quantity_used} {line.unit}</td>
+                          <td className="py-2 capitalize">{line.scaling_mode}</td>
+                          <td className="py-2 text-right text-emerald-600">
+                            {formatCurrency(line.calculated_cost, currency)}
+                          </td>
+                          {isCurrentEditable && (
+                            <td className="py-2 text-right">
+                              <Button variant="ghost" size="sm" onClick={() =>
+                                removeBaseIng.mutate({ id: line.id, versionId: activeVersion.id, productId: product.id })
+                              }>
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </td>
+                          )}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        )}
+      </TabPanel>
+
+      <TabPanel active={tab} id="varieties">
+        <div className="mb-4 flex justify-between">
+          <p className="text-sm text-slate-500">
+            {canCreateVariety
+              ? 'Create varieties from the current base recipe. Set packaging, labour, and shipping overheads when creating or editing a variety.'
+              : 'Add a base recipe before creating varieties'}
+          </p>
+          <Button
+            disabled={!canCreateVariety}
+            onClick={() => { setEditing(undefined); setFormOpen(true) }}
+          >
+            <Plus className="h-4 w-4" /> Create from Base Recipe
+          </Button>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
+                <th className="px-4 py-3 text-left">Variety</th>
+                <th className="px-4 py-3 text-left">Size</th>
+                <th className="px-4 py-3 text-right">Factor</th>
+                <th className="px-4 py-3 text-right">Selling</th>
+                <th className="px-4 py-3 text-right">Pack</th>
+                <th className="px-4 py-3 text-right">Labour</th>
+                <th className="px-4 py-3 text-right">Ship</th>
+                <th className="px-4 py-3 text-right">Total Cost</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {varieties.length === 0 ? (
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-500">No varieties yet</td></tr>
+              ) : (
+                varieties.map((v) => (
+                  <tr key={v.id} className="border-b border-slate-100 dark:border-slate-800">
+                    <td className="px-4 py-3 font-medium">
+                      {v.variety_name}
+                      {v.has_manual_recipe_overrides && (
+                        <span className="ml-2 text-xs text-amber-600">modified</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">{v.size_label || '—'}</td>
+                    <td className="px-4 py-3 text-right">{v.base_recipe_factor}</td>
+                    <td className="px-4 py-3 text-right">{formatCurrency(v.selling_price, currency)}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(v.packaging_cost, currency)}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(v.labour_cost, currency)}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(v.shipping_cost ?? 0, currency)}</td>
+                    <td className="px-4 py-3 text-right text-emerald-600">{formatCurrency(v.current_cost_price, currency)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <Link to={`/products/${product.id}/varieties/${v.id}`}>
+                          <Button variant="outline" size="sm">Open <ChevronRight className="h-4 w-4" /></Button>
+                        </Link>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditing(v); setFormOpen(true) }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(v)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  (costHistory ?? []).map((entry) => (
-                    <tr
-                      key={entry.id}
-                      className="border-b border-slate-100 dark:border-slate-800"
-                    >
-                      <td className="px-3 py-2">
-                        {formatDateTime(entry.created_at)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {formatCurrency(entry.previous_cost, currency)}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {formatCurrency(entry.new_cost, currency)}
-                      </td>
-                      <td
-                        className={`px-3 py-2 text-right font-medium ${
-                          entry.percentage_change > 0
-                            ? 'text-red-600'
-                            : 'text-emerald-600'
-                        }`}
-                      >
-                        {entry.percentage_change > 0 ? '+' : ''}
-                        {entry.percentage_change.toFixed(2)}%
-                      </td>
-                      <td className="px-3 py-2">
-                        <StatusBadge status={entry.status} />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </TabPanel>
+
+      <VarietyFormDialog
+        open={formOpen}
+        onClose={() => { setFormOpen(false); setEditing(undefined) }}
+        productId={product.id}
+        variety={editing}
+        baseLines={baseLines}
+      />
+
+      <Dialog open={showNewVersion} onClose={() => setShowNewVersion(false)} title="Save as new version">
+        <div className="space-y-4">
+          <Input label="Version name" value={newVersionName} onChange={(e) => setNewVersionName(e.target.value)} placeholder="e.g. Reduced Biscuit Base" />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowNewVersion(false)}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                await saveVersion.mutateAsync({ productId: product.id, name: newVersionName })
+                setNewVersionName('')
+                setShowNewVersion(false)
+              }}
+              disabled={!newVersionName.trim()}
+            >
+              Save
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </Dialog>
 
       <ConfirmDialog
-        open={Boolean(removeTarget)}
-        onClose={() => setRemoveTarget(null)}
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(undefined)}
         onConfirm={async () => {
-          if (removeTarget) {
-            await removeMutation.mutateAsync({
-              id: removeTarget.id,
-              productId: product.id,
-            })
-            setRemoveTarget(null)
+          if (deleteTarget) {
+            await deleteMutation.mutateAsync({ id: deleteTarget.id, productId: product.id })
+            setDeleteTarget(undefined)
           }
         }}
-        title="Remove Ingredient"
-        message={`Remove "${removeTarget?.name}" from this recipe?`}
-        confirmLabel="Remove"
-        loading={removeMutation.isPending}
+        title="Delete Variety"
+        message={`Delete "${deleteTarget?.variety_name}"?`}
+        loading={deleteMutation.isPending}
       />
     </div>
   )

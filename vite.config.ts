@@ -9,6 +9,9 @@ export default defineConfig({
   server: {
     port: 9095,
     strictPort: true,
+    hmr: {
+      overlay: true,
+    },
   },
   preview: {
     port: 9095,
@@ -18,5 +21,5 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
-  },
+  }
 })

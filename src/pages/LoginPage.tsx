@@ -1,17 +1,22 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRequestPasswordReset } from '@/hooks/useAuthActions'
 import { isSupabaseConfigured } from '@/services/supabase'
 import { toast } from 'sonner'
 
 export function LoginPage() {
-  const { user, loading, signIn, signUp } = useAuth()
-  const [isSignUp, setIsSignUp] = useState(false)
+  const { user, isApproved, loading, signIn } = useAuth()
+  const [searchParams] = useSearchParams()
+  const [mode, setMode] = useState<'signin' | 'forgot'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const resetMutation = useRequestPasswordReset()
+
+  const statusHint = searchParams.get('status')
 
   if (loading) {
     return (
@@ -21,19 +26,14 @@ export function LoginPage() {
     )
   }
 
-  if (user) return <Navigate to="/" replace />
+  if (user && isApproved) return <Navigate to="/" replace />
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     try {
-      if (isSignUp) {
-        await signUp(email, password)
-        toast.success('Account created! Check your email to confirm.')
-      } else {
-        await signIn(email, password)
-        toast.success('Welcome back!')
-      }
+      await signIn(email, password)
+      toast.success('Welcome back!')
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Authentication failed'
@@ -41,6 +41,12 @@ export function LoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await resetMutation.mutateAsync(email)
+    setMode('signin')
   }
 
   return (
@@ -51,9 +57,15 @@ export function LoginPage() {
             Product Cost Manager
           </h1>
           <p className="mt-2 text-slate-500 dark:text-slate-400">
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            {mode === 'signin' ? 'Sign in to your account' : 'Reset your password'}
           </p>
         </div>
+
+        {statusHint === 'pending' && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+            Your account is awaiting approval from a super administrator.
+          </div>
+        )}
 
         {!isSupabaseConfigured && (
           <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
@@ -62,39 +74,69 @@ export function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            autoComplete={isSignUp ? 'new-password' : 'current-password'}
-          />
-          <Button type="submit" className="w-full" loading={submitting}>
-            {isSignUp ? 'Create Account' : 'Sign In'}
-          </Button>
-        </form>
+        {mode === 'signin' ? (
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              autoComplete="current-password"
+            />
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setMode('forgot')}
+                className="text-sm text-emerald-600 hover:underline dark:text-emerald-400"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <Button type="submit" className="w-full" loading={submitting}>
+              Sign In
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleForgot} className="space-y-4">
+            <p className="text-sm text-slate-500">
+              Enter your email and we&apos;ll send a link to set a new password.
+            </p>
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+            <Button type="submit" className="w-full" loading={resetMutation.isPending}>
+              Send reset email
+            </Button>
+            <button
+              type="button"
+              onClick={() => setMode('signin')}
+              className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
+            >
+              Back to sign in
+            </button>
+          </form>
+        )}
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </button>
-        </p>
+        {mode === 'signin' && (
+          <p className="mt-6 text-center text-sm text-slate-500">
+            New accounts are invite-only. Ask your administrator to send you an email invite.
+          </p>
+        )}
       </div>
     </div>
   )
