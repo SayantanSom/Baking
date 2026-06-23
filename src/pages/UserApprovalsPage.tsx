@@ -74,7 +74,7 @@ export function UserApprovalsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">User management</h1>
-        <p className="text-slate-500">
+        <p className="text-fg-muted">
           Invite team members by email. They verify their address and set a password before signing in.
         </p>
       </div>
@@ -82,7 +82,7 @@ export function UserApprovalsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-emerald-600" />
+            <UserPlus className="h-5 w-5 text-accent" />
             Invite new user
           </CardTitle>
         </CardHeader>
@@ -102,11 +102,11 @@ export function UserApprovalsPage() {
               Send invite
             </Button>
           </form>
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-fg-muted">
             Supabase sends a verification email. Invited users are approved automatically and can sign in after they complete setup.
           </p>
           {user?.email && (
-            <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -125,20 +125,20 @@ export function UserApprovalsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-emerald-600" />
+            <UserCheck className="h-5 w-5 text-accent" />
             Pending requests ({pending.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {pending.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-fg-muted">
               No pending self-registration requests. Disable public sign-up in Supabase to avoid spam.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
+                  <tr className="border-b bg-surface-muted">
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Requested</th>
                     <th className="px-4 py-3 text-right">Actions</th>
@@ -146,9 +146,9 @@ export function UserApprovalsPage() {
                 </thead>
                 <tbody>
                   {pending.map((row) => (
-                    <tr key={row.id} className="border-b border-slate-100 dark:border-slate-800">
+                    <tr key={row.id} className="border-b border-border">
                       <td className="px-4 py-3 font-medium">{row.email}</td>
-                      <td className="px-4 py-3 text-slate-600">
+                      <td className="px-4 py-3 text-fg-secondary">
                         {formatDateTime(row.created_at)}
                       </td>
                       <td className="px-4 py-3">
@@ -182,7 +182,7 @@ export function UserApprovalsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-slate-500" />
+            <Shield className="h-5 w-5 text-fg-muted" />
             All users
           </CardTitle>
           {approvedUsers.length > 0 && (
@@ -197,10 +197,10 @@ export function UserApprovalsPage() {
           )}
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
+                <tr className="border-b bg-surface-muted">
                   <th className="px-4 py-3 text-left">Email</th>
                   <th className="px-4 py-3 text-left">Status</th>
                   <th className="px-4 py-3 text-left">Registered</th>
@@ -210,13 +210,13 @@ export function UserApprovalsPage() {
               </thead>
               <tbody>
                 {(users ?? []).map((row) => (
-                  <tr key={row.id} className="border-b border-slate-100 dark:border-slate-800">
+                  <tr key={row.id} className="border-b border-border">
                     <td className="px-4 py-3">{row.email}</td>
                     <td className="px-4 py-3">{statusLabel(row)}</td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-fg-secondary">
                       {formatDateTime(row.created_at)}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-fg-secondary">
                       {row.approved_at ? formatDateTime(row.approved_at) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">

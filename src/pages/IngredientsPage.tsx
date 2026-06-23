@@ -111,7 +111,7 @@ function IngredientFormDialog({
           <textarea
             {...register('notes')}
             rows={2}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+            className="w-full rounded-lg border border-border-strong bg-input px-3 py-2 text-sm"
           />
         </div>
         <div className="flex justify-end gap-3">
@@ -159,7 +159,7 @@ export function IngredientsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Ingredients</h1>
-          <p className="text-slate-500">Master ingredients with vendor pricing</p>
+          <p className="text-fg-muted">Master ingredients with vendor pricing</p>
         </div>
         <Button onClick={() => { setEditing(undefined); setFormOpen(true) }}>
           <Plus className="h-4 w-4" /> Add Ingredient
@@ -167,20 +167,20 @@ export function IngredientsPage() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle" />
         <input
           type="text"
           placeholder="Search ingredients..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="w-full rounded-lg border border-border-strong bg-input py-2 pl-10 pr-4 text-sm"
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+            <tr className="border-b bg-surface-muted">
               <th className="w-10 px-2 py-3" />
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Base Unit</th>
@@ -191,7 +191,7 @@ export function IngredientsPage() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No ingredients</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-fg-muted">No ingredients</td></tr>
             ) : (
               filtered.map((ing) => {
                 const isOpen = expanded.has(ing.id)
@@ -201,15 +201,15 @@ export function IngredientsPage() {
                   <Fragment key={ing.id}>
                     <tr
                       className={cn(
-                        'border-b border-slate-100 dark:border-slate-800',
-                        isOpen && 'bg-white dark:bg-slate-900'
+                        'border-b border-border',
+                        isOpen && 'bg-surface'
                       )}
                     >
                       <td className="px-2 py-3">
                         <button
                           type="button"
                           onClick={() => toggleExpanded(ing.id)}
-                          className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                          className="rounded p-1 text-fg-muted hover:bg-hover hover:text-fg-secondary"
                           aria-expanded={isOpen}
                           aria-label={isOpen ? 'Collapse suppliers' : 'Expand suppliers'}
                         >
@@ -224,16 +224,16 @@ export function IngredientsPage() {
                         <button
                           type="button"
                           onClick={() => toggleExpanded(ing.id)}
-                          className="text-left font-semibold text-slate-900 hover:text-emerald-700 dark:text-slate-100"
+                          className="text-left font-semibold text-fg hover:text-accent"
                         >
                           {ing.name}
-                          <span className="ml-1.5 font-normal text-slate-500">
+                          <span className="ml-1.5 font-normal text-fg-muted">
                             ({supplierCount})
                           </span>
                         </button>
                       </td>
                       <td className="px-4 py-3">{ing.base_unit}</td>
-                      <td className="px-4 py-3 text-right text-emerald-600">
+                      <td className="px-4 py-3 text-right text-accent">
                         {ing.active_vendor_price
                           ? formatUnitCost(ing.active_vendor_price.cost_per_base_unit, currency)
                           : '—'}

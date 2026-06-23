@@ -24,8 +24,8 @@ export function ProductVarietyRows({
 
   if (varieties.length === 0) {
     return (
-      <tr className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/30">
-        <td colSpan={7} className="px-4 py-2 pl-12 text-sm text-slate-500">
+      <tr className="border-b border-border bg-surface-muted/50">
+        <td colSpan={7} className="px-4 py-2 pl-12 text-sm text-fg-muted">
           No varieties yet — open Manage to add one
         </td>
       </tr>
@@ -37,25 +37,25 @@ export function ProductVarietyRows({
       {varieties.map((variety) => (
         <tr
           key={variety.id}
-          className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/30"
+          className="border-b border-border bg-surface-muted/50"
         >
           <td className="px-2 py-2" />
           <td className="px-4 py-2 pl-12">
             <Link
               to={`/products/${productId}/varieties/${variety.id}`}
-              className="text-emerald-600 hover:underline"
+              className="text-accent hover:underline"
             >
               {varietyLabel(variety)}
             </Link>
             {variety.sku && (
-              <span className="ml-2 text-xs text-slate-400">{variety.sku}</span>
+              <span className="ml-2 text-xs text-fg-subtle">{variety.sku}</span>
             )}
           </td>
           <td className="px-4 py-2" />
           <td className="px-4 py-2 text-right">
             {formatCurrency(variety.selling_price, currency)}
           </td>
-          <td className="px-4 py-2 text-right text-slate-600">
+          <td className="px-4 py-2 text-right text-fg-secondary">
             {formatCurrency(variety.current_cost_price, currency)}
           </td>
           <td className="px-4 py-2 text-center">

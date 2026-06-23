@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './styles/theme.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -19,13 +20,4 @@ body {
 
 #root {
   min-height: 100vh;
-}
-
-/* Recharts dark mode */
-.dark .recharts-cartesian-grid line {
-  stroke: #334155;
-}
-
-.dark .recharts-text {
-  fill: #94a3b8;
 }

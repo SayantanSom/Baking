@@ -134,7 +134,7 @@ export function VarietyDetailPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{displayName || variety.variety_name}</h1>
-          <p className="text-slate-500">{variety.variety_name}{variety.sku ? ` · ${variety.sku}` : ''}</p>
+          <p className="text-fg-muted">{variety.variety_name}{variety.sku ? ` · ${variety.sku}` : ''}</p>
         </div>
       </div>
 
@@ -154,7 +154,7 @@ export function VarietyDetailPage() {
         <div className="mb-4 flex flex-wrap gap-2">
           {positionStatus && <StatusBadge status={positionStatus} />}
           {isPriceLocked(variety) && variety.price_locked_until && (
-            <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800">
+            <span className="rounded-full bg-accent-muted px-2 py-1 text-xs text-accent-muted-fg">
               Price protected until {formatDate(variety.price_locked_until)}
             </span>
           )}
@@ -184,7 +184,7 @@ export function VarietyDetailPage() {
           <Card>
             <CardHeader><CardTitle>Production overheads</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-fg-muted">
                 Fixed costs added on top of ingredients. Changes update total production cost and cost history.
               </p>
               <div className="grid gap-3 sm:grid-cols-3">
@@ -233,7 +233,7 @@ export function VarietyDetailPage() {
             </CardContent>
           </Card>
         </div>
-        <p className="mt-4 text-sm text-slate-500">
+        <p className="mt-4 text-sm text-fg-muted">
           Selling price history tracks catalogue price changes. Production cost history tracks ingredient, packaging, labour, and shipping changes — not selling price.
         </p>
         <Card className="mt-4">
@@ -274,7 +274,7 @@ export function VarietyDetailPage() {
 
       <TabPanel active={tab} id="recipe">
         {variety.created_from_base_recipe_at && (
-          <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+          <div className="mb-4 rounded-lg border border-warning-border bg-warning-muted p-3 text-sm text-warning">
             {variety.has_manual_recipe_overrides
               ? `Created from base recipe v${variety.source_recipe_version?.version_number ?? '?'} — may have manual changes.`
               : `Copied from base recipe (factor ${variety.base_recipe_factor}).`}
@@ -324,13 +324,13 @@ export function VarietyDetailPage() {
               </thead>
               <tbody>
                 {variety.product_variety_ingredients.length === 0 ? (
-                  <tr><td colSpan={4} className="py-6 text-center text-slate-500">No ingredients</td></tr>
+                  <tr><td colSpan={4} className="py-6 text-center text-fg-muted">No ingredients</td></tr>
                 ) : (
                   variety.product_variety_ingredients.map((item) => (
-                    <tr key={item.id} className="border-b border-slate-100">
+                    <tr key={item.id} className="border-b border-border">
                       <td className="py-2 font-medium">
                         {item.ingredient_id ? (
-                          <Link to={`/ingredients/${item.ingredient_id}`} className="text-emerald-600 hover:underline">
+                          <Link to={`/ingredients/${item.ingredient_id}`} className="text-accent hover:underline">
                             {item.ingredient?.name}
                           </Link>
                         ) : (
@@ -350,10 +350,10 @@ export function VarietyDetailPage() {
                               varietyId: variety.id,
                             })
                           }
-                          className="w-20 rounded border px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-800"
+                          className="w-20 rounded border px-2 py-1 text-right text-sm border-border-strong bg-input"
                         /> {item.unit}
                       </td>
-                      <td className="py-2 text-right text-emerald-600">
+                      <td className="py-2 text-right text-accent">
                         {formatCurrency(item.calculated_cost, currency)}
                       </td>
                       <td className="py-2 text-right">
@@ -385,7 +385,7 @@ export function VarietyDetailPage() {
           </thead>
           <tbody>
             {(acceptanceHistory ?? []).length === 0 ? (
-              <tr><td colSpan={7} className="py-6 text-center text-slate-500">No acceptance history</td></tr>
+              <tr><td colSpan={7} className="py-6 text-center text-fg-muted">No acceptance history</td></tr>
             ) : (
               (acceptanceHistory ?? []).map((a) => (
                 <tr key={a.id} className="border-b">
@@ -393,7 +393,7 @@ export function VarietyDetailPage() {
                   <td className="py-2">
                     {ACCEPTANCE_REASON_OPTIONS.find((o) => o.value === a.accepted_reason_type)?.label ?? a.accepted_reason_type}
                     {a.accepted_reason_notes && (
-                      <span className="block text-slate-500">{a.accepted_reason_notes}</span>
+                      <span className="block text-fg-muted">{a.accepted_reason_notes}</span>
                     )}
                   </td>
                   <td className="py-2 text-right">{formatCurrency(a.accepted_cost_price, currency)}</td>
@@ -422,7 +422,7 @@ export function VarietyDetailPage() {
           </thead>
           <tbody>
             {(sellingHistory ?? []).length === 0 ? (
-              <tr><td colSpan={5} className="py-6 text-center text-slate-500">No selling price changes</td></tr>
+              <tr><td colSpan={5} className="py-6 text-center text-fg-muted">No selling price changes</td></tr>
             ) : (
               (sellingHistory ?? []).map((e) => (
                 <tr key={e.id} className="border-b">
@@ -430,7 +430,7 @@ export function VarietyDetailPage() {
                   <td className="py-2 text-right">{formatCurrency(e.previous_selling_price, currency)}</td>
                   <td className="py-2 text-right">{formatCurrency(e.new_selling_price, currency)}</td>
                   <td className="py-2 text-right">{e.percentage_change.toFixed(2)}%</td>
-                  <td className="py-2 text-slate-500">{e.reason ?? '—'}</td>
+                  <td className="py-2 text-fg-muted">{e.reason ?? '—'}</td>
                 </tr>
               ))
             )}
@@ -439,7 +439,7 @@ export function VarietyDetailPage() {
       </TabPanel>
 
       <TabPanel active={tab} id="cost">
-        <p className="mb-2 text-sm text-slate-500">Production cost changes from ingredients, packaging, labour, or shipping — not selling price.</p>
+        <p className="mb-2 text-sm text-fg-muted">Production cost changes from ingredients, packaging, labour, or shipping — not selling price.</p>
         <HistoryLineChart data={costChart} valueFormatter={(v) => formatCurrency(v, currency)} />
         <table className="mt-4 w-full text-sm">
           <thead>
@@ -454,7 +454,7 @@ export function VarietyDetailPage() {
           </thead>
           <tbody>
             {(costHistory ?? []).length === 0 ? (
-              <tr><td colSpan={6} className="py-6 text-center text-slate-500">No cost changes</td></tr>
+              <tr><td colSpan={6} className="py-6 text-center text-fg-muted">No cost changes</td></tr>
             ) : (
               (costHistory ?? []).map((e) => (
                 <tr key={e.id} className="border-b">
@@ -463,7 +463,7 @@ export function VarietyDetailPage() {
                   <td className="py-2 text-right">{formatCurrency(e.new_cost_price, currency)}</td>
                   <td className="py-2 text-right">{e.percentage_change.toFixed(2)}%</td>
                   <td className="py-2"><StatusBadge status={e.status} /></td>
-                  <td className="py-2 text-slate-500">{e.reason}</td>
+                  <td className="py-2 text-fg-muted">{e.reason}</td>
                 </tr>
               ))
             )}
@@ -472,7 +472,7 @@ export function VarietyDetailPage() {
       </TabPanel>
 
       <Dialog open={refreshOpen} onClose={() => setRefreshOpen(false)} title="Refresh from Base Recipe">
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="mb-4 text-sm text-fg-secondary">
           This will replace this variety recipe with the current product base recipe using the selected factor. Manual changes will be lost.
         </p>
         <Input label="Factor" type="number" step="0.1" value={refreshFactor} onChange={(e) => setRefreshFactor(e.target.value)} />

@@ -80,7 +80,7 @@ export function AcceptVarietyDialog({
       title={mode === 'cost' ? 'Accept Cost' : 'Accept & Reprice'}
     >
       <div className="space-y-4">
-        <div className="rounded-lg border p-3 text-sm dark:border-slate-700">
+        <div className="rounded-lg border p-3 text-sm border-border">
           <p>Current cost: {formatCurrency(variety.current_cost_price, currency)}</p>
           <p>Current price: {formatCurrency(variety.selling_price, currency)}</p>
           {mode === 'reprice' && (

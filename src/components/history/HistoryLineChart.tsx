@@ -19,7 +19,7 @@ export function HistoryLineChart({
 }) {
   if (data.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-slate-500">No history to chart yet</p>
+      <p className="py-8 text-center text-sm text-fg-muted">No history to chart yet</p>
     )
   }
 
@@ -29,7 +29,7 @@ export function HistoryLineChart({
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis dataKey="date" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
           <Tooltip
@@ -41,7 +41,7 @@ export function HistoryLineChart({
           <Line
             type="monotone"
             dataKey={dataKey ?? 'value'}
-            stroke="#059669"
+            stroke="var(--theme-chart-line)"
             strokeWidth={2}
             dot={{ r: 3 }}
           />

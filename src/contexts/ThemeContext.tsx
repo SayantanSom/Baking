@@ -6,6 +6,10 @@ import {
   type ReactNode,
 } from 'react'
 
+/**
+ * Toggles the `.dark` class on `<html>`, which swaps CSS variables in src/styles/theme.css.
+ * Use semantic classes from src/lib/theme.ts — not per-component dark: utilities.
+ */
 type Theme = 'light' | 'dark'
 
 interface ThemeContextValue {

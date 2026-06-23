@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 import { type ButtonHTMLAttributes, forwardRef } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,16 +22,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const variants = {
-      primary:
-        'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600',
-      secondary:
-        'bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
-      danger:
-        'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
-      ghost:
-        'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300',
-      outline:
-        'border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800',
+      primary: 'bg-accent-solid text-accent-solid-fg hover:opacity-90',
+      secondary: 'bg-surface-muted text-fg hover:bg-hover',
+      danger: 'bg-danger text-white hover:opacity-90',
+      ghost: 'hover:bg-hover text-fg-secondary',
+      outline: 'border border-border-strong hover:bg-hover',
     }
 
     const sizes = {
@@ -43,7 +39,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+          'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50',
+          theme.focusRing,
           variants[variant],
           sizes[size],
           className

@@ -29,24 +29,24 @@ export function GrossMarginCard({
   ]
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50 lg:col-span-2">
-      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Gross margin</p>
+    <div className="rounded-lg border border-border bg-surface-muted p-4 lg:col-span-2">
+      <p className="text-sm font-medium text-fg-secondary">Gross margin</p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {rows.map((row) => (
           <div
             key={row.label}
-            className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+            className="rounded-lg border border-border bg-surface p-3"
           >
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">
               {row.label}
             </p>
-            <p className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
+            <p className="mt-1 text-xl font-bold text-fg">
               {formatCurrency(row.amount, currency)}
             </p>
-            <p className="mt-0.5 text-sm font-medium text-emerald-600">
+            <p className="mt-0.5 text-sm font-medium text-accent">
               {row.percentage.toFixed(1)}%
             </p>
-            <p className="mt-1 text-xs text-slate-500">{row.hint}</p>
+            <p className="mt-1 text-xs text-fg-muted">{row.hint}</p>
           </div>
         ))}
       </div>

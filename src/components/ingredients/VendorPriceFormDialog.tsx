@@ -151,9 +151,9 @@ export function VendorPriceFormDialog({
           <input type="checkbox" {...register('is_active')} />
           Set as active vendor
         </label>
-        <div className="rounded bg-slate-50 p-2 text-sm dark:bg-slate-800">
+        <div className="rounded bg-surface-muted p-2 text-sm">
           Cost per {ingredient.base_unit}:{' '}
-          <span className="font-medium text-emerald-600">
+          <span className="font-medium text-accent">
             {formatUnitCost(previewCost, currency)}
           </span>
         </div>

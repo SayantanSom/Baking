@@ -66,7 +66,7 @@ export function VendorPricesSection({ ingredient }: { ingredient: Ingredient }) 
     setEditing(undefined)
   }
 
-  if (isLoading) return <p className="text-sm text-slate-500">Loading...</p>
+  if (isLoading) return <p className="text-sm text-fg-muted">Loading...</p>
 
   return (
     <div className="space-y-4">
@@ -75,7 +75,7 @@ export function VendorPricesSection({ ingredient }: { ingredient: Ingredient }) 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">Normalised Cost View</h3>
-          <p className="text-xs text-slate-500">Sorted by cost per {ingredient.base_unit} — compare pack sizes fairly</p>
+          <p className="text-xs text-fg-muted">Sorted by cost per {ingredient.base_unit} — compare pack sizes fairly</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -93,10 +93,10 @@ export function VendorPricesSection({ ingredient }: { ingredient: Ingredient }) 
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+            <tr className="border-b bg-surface-muted">
               <th className="px-3 py-2 text-left">Supplier</th>
               <th className="px-3 py-2 text-right">Pack</th>
               <th className="px-3 py-2 text-right">Price</th>
@@ -108,7 +108,7 @@ export function VendorPricesSection({ ingredient }: { ingredient: Ingredient }) 
           <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={6} className="px-3 py-6 text-center text-fg-muted">
                   No vendor prices yet
                 </td>
               </tr>
@@ -122,23 +122,23 @@ export function VendorPricesSection({ ingredient }: { ingredient: Ingredient }) 
                 return (
                   <tr
                     key={p.id}
-                    className={`border-b border-slate-100 dark:border-slate-800 ${isCheapest ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}`}
+                    className={`border-b border-border ${isCheapest ? 'bg-accent-muted/50' : ''}`}
                   >
                     <td className="px-3 py-2">
                       <p className="font-medium">{p.vendor_name}</p>
                       {isCheapest && (
-                        <span className="text-xs text-emerald-600">Best price</span>
+                        <span className="text-xs text-accent">Best price</span>
                       )}
-                      <p className="text-xs text-slate-400">{formatDateTime(p.last_checked_at)}</p>
+                      <p className="text-xs text-fg-subtle">{formatDateTime(p.last_checked_at)}</p>
                     </td>
                     <td className="px-3 py-2 text-right">
                       {p.pack_size}{p.pack_unit}
-                      <span className="block text-xs text-slate-400">
+                      <span className="block text-xs text-fg-subtle">
                         ({converted.toFixed(2)} {ingredient.base_unit})
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right">{formatCurrency(p.pack_cost, currency)}</td>
-                    <td className="px-3 py-2 text-right font-medium text-emerald-600">
+                    <td className="px-3 py-2 text-right font-medium text-accent">
                       {formatUnitCost(p.cost_per_base_unit, currency)}/{ingredient.base_unit}
                     </td>
                     <td className="px-3 py-2">

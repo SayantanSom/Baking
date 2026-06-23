@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import type { CostStatus } from '@/types/database'
+import { statusBadgeClass } from '@/lib/theme'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -69,12 +70,5 @@ export function getStatusLabel(status: CostStatus): string {
 }
 
 export function getStatusColor(status: CostStatus): string {
-  switch (status) {
-    case 'green':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-    case 'amber':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-    case 'red':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-  }
+  return statusBadgeClass(status)
 }

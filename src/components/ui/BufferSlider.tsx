@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 
 const SLIDER_MAX = 50
 
@@ -23,9 +24,7 @@ export function BufferSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {label}
-        </label>
+        <label className={cn('text-sm font-medium', theme.textSecondary)}>{label}</label>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -37,9 +36,9 @@ export function BufferSlider({
               const next = parseFloat(e.target.value)
               onChange(Number.isFinite(next) ? next : 0)
             }}
-            className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-900"
+            className={cn(theme.inputInline, 'w-16 text-right')}
           />
-          <span className="text-sm text-slate-500">%</span>
+          <span className={cn('text-sm', theme.textMuted)}>%</span>
         </div>
       </div>
       {showSlider ? (
@@ -51,15 +50,14 @@ export function BufferSlider({
           value={sliderValue}
           onChange={(e) => onChange(parseFloat(e.target.value))}
           className={cn(
-            'h-2 w-full cursor-pointer appearance-none rounded-lg',
-            'bg-slate-200 dark:bg-slate-700',
+            'h-2 w-full cursor-pointer appearance-none rounded-lg bg-border',
             '[&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4',
             '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full',
-            '[&::-webkit-slider-thumb]:bg-emerald-600'
+            '[&::-webkit-slider-thumb]:bg-accent-solid'
           )}
         />
       ) : (
-        <p className="text-xs text-slate-500">
+        <p className={cn('text-xs', theme.textMuted)}>
           Above {SLIDER_MAX}% — adjust using the number field only
         </p>
       )}

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useUpdatePassword } from '@/hooks/useAuthActions'
 import { supabase } from '@/services/supabase'
+import { cn } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 
 function isRecoveryHash(hash: string): boolean {
   if (!hash || hash === '#') return false
@@ -59,20 +61,20 @@ export function ResetPasswordPage() {
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-muted border-t-accent-solid" />
       </div>
     )
   }
 
   if (!recoveryReady) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-lg dark:border-slate-700 dark:bg-slate-900">
+      <div className={theme.authPage}>
+        <div className={cn(theme.authCard, 'text-center')}>
           <h1 className="text-xl font-bold">Reset link required</h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-fg-muted">
             Open the password reset link from your email, or request a new one from the sign-in page.
           </p>
-          <Link to="/login" className="mt-6 inline-block text-emerald-600 hover:underline">
+          <Link to="/login" className="mt-6 inline-block text-accent hover:underline">
             Back to sign in
           </Link>
         </div>
@@ -90,12 +92,12 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-        <h1 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+    <div className={theme.authPage}>
+      <div className={theme.authCard}>
+        <h1 className="text-2xl font-bold text-accent">
           Set new password
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-fg-muted">
           Choose a new password for your account.
         </p>
 
@@ -119,7 +121,7 @@ export function ResetPasswordPage() {
             autoComplete="new-password"
           />
           {password && confirm && password !== confirm && (
-            <p className="text-sm text-red-600">Passwords do not match</p>
+            <p className="text-sm text-danger">Passwords do not match</p>
           )}
           <Button
             type="submit"
@@ -132,7 +134,7 @@ export function ResetPasswordPage() {
         </form>
 
         <p className="mt-6 text-center text-sm">
-          <Link to="/login" className="text-emerald-600 hover:underline">
+          <Link to="/login" className="text-accent hover:underline">
             Back to sign in
           </Link>
         </p>

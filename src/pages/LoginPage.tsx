@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRequestPasswordReset } from '@/hooks/useAuthActions'
 import { isSupabaseConfigured } from '@/services/supabase'
+import { cn } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 import { toast } from 'sonner'
 
 export function LoginPage() {
@@ -21,7 +23,7 @@ export function LoginPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-muted border-t-accent-solid" />
       </div>
     )
   }
@@ -50,25 +52,25 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+    <div className={theme.authPage}>
+      <div className={theme.authCard}>
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+          <h1 className="text-2xl font-bold text-accent">
             Product Cost Manager
           </h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-fg-muted">
             {mode === 'signin' ? 'Sign in to your account' : 'Reset your password'}
           </p>
         </div>
 
         {statusHint === 'pending' && (
-          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <div className={cn('mb-6', theme.alertWarningInline)}>
             Your account is awaiting approval from a super administrator.
           </div>
         )}
 
         {!isSupabaseConfigured && (
-          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <div className={cn('mb-6', theme.alertWarningInline)}>
             Supabase is not configured. Copy <code>.env.example</code> to{' '}
             <code>.env</code> and add your credentials.
           </div>
@@ -97,7 +99,7 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={() => setMode('forgot')}
-                className="text-sm text-emerald-600 hover:underline dark:text-emerald-400"
+                className="text-sm text-accent hover:underline"
               >
                 Forgot password?
               </button>
@@ -108,7 +110,7 @@ export function LoginPage() {
           </form>
         ) : (
           <form onSubmit={handleForgot} className="space-y-4">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-fg-muted">
               Enter your email and we&apos;ll send a link to set a new password.
             </p>
             <Input
@@ -125,7 +127,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => setMode('signin')}
-              className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
+              className="w-full text-center text-sm text-fg-muted hover:text-fg-secondary"
             >
               Back to sign in
             </button>
@@ -133,7 +135,7 @@ export function LoginPage() {
         )}
 
         {mode === 'signin' && (
-          <p className="mt-6 text-center text-sm text-slate-500">
+          <p className="mt-6 text-center text-sm text-fg-muted">
             New accounts are invite-only. Ask your administrator to send you an email invite.
           </p>
         )}

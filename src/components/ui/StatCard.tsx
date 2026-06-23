@@ -1,4 +1,5 @@
 import { cn, formatCurrency } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 import type { LucideIcon } from 'lucide-react'
 
 interface StatCardProps {
@@ -17,33 +18,20 @@ export function StatCard({
   variant = 'default',
 }: StatCardProps) {
   const variants = {
-    default: 'text-emerald-600 dark:text-emerald-400',
-    warning: 'text-amber-600 dark:text-amber-400',
-    danger: 'text-red-600 dark:text-red-400',
+    default: 'text-accent',
+    warning: 'text-warning-secondary',
+    danger: 'text-danger',
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <div className={cn(theme.surface, 'p-6')}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            {title}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">
-            {value}
-          </p>
-          {trend && (
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {trend}
-            </p>
-          )}
+          <p className={cn('text-sm font-medium', theme.textMuted)}>{title}</p>
+          <p className="mt-2 text-3xl font-bold text-fg">{value}</p>
+          {trend && <p className={cn('mt-1 text-sm', theme.textMuted)}>{trend}</p>}
         </div>
-        <div
-          className={cn(
-            'rounded-lg bg-slate-50 p-3 dark:bg-slate-800',
-            variants[variant]
-          )}
-        >
+        <div className={cn('rounded-lg bg-surface-muted p-3', variants[variant])}>
           <Icon className="h-6 w-6" />
         </div>
       </div>
@@ -69,17 +57,15 @@ export function CostDisplay({
       className={cn(
         'rounded-lg border p-4',
         highlight
-          ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
-          : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50'
+          ? 'border-accent/30 bg-accent-muted'
+          : 'border-border bg-surface-muted'
       )}
     >
-      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={cn('text-sm', theme.textMuted)}>{label}</p>
       <p
         className={cn(
           'mt-1 text-2xl font-bold',
-          highlight
-            ? 'text-emerald-700 dark:text-emerald-300'
-            : 'text-slate-900 dark:text-slate-100'
+          highlight ? 'text-accent-muted-fg' : 'text-fg'
         )}
       >
         {formatCurrency(amount, currency)}

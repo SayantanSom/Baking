@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 import type { ReactNode } from 'react'
 
 interface CardProps {
@@ -8,12 +9,7 @@ interface CardProps {
 
 export function Card({ children, className }: CardProps) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900',
-        className
-      )}
-    >
+    <div className={cn(theme.surface, className)}>
       {children}
     </div>
   )
@@ -27,12 +23,7 @@ export function CardHeader({
   className?: string
 }) {
   return (
-    <div
-      className={cn(
-        'border-b border-slate-200 px-6 py-4 dark:border-slate-700',
-        className
-      )}
-    >
+    <div className={cn(theme.surfaceHeader, 'px-6 py-4', className)}>
       {children}
     </div>
   )
@@ -46,12 +37,7 @@ export function CardTitle({
   className?: string
 }) {
   return (
-    <h3
-      className={cn(
-        'text-lg font-semibold text-slate-900 dark:text-slate-100',
-        className
-      )}
-    >
+    <h3 className={cn(theme.headingLg, className)}>
       {children}
     </h3>
   )

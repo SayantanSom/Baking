@@ -91,16 +91,16 @@ export function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-slate-500">Global defaults and catalogue template</p>
+        <p className="text-fg-muted">Global defaults and catalogue template</p>
       </div>
 
       <Card>
         <CardHeader><CardTitle>Account</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-slate-500">
-            Signed in as <span className="font-medium text-slate-700 dark:text-slate-300">{user?.email}</span>
+          <p className="text-sm text-fg-muted">
+            Signed in as <span className="font-medium text-fg-secondary">{user?.email}</span>
           </p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-fg-muted">
             We&apos;ll email you a secure link to set a new password.
           </p>
           <Button
@@ -139,7 +139,7 @@ export function SettingsPage() {
               step="0.01"
               {...settingsForm.register('default_packaging_cost', { valueAsNumber: true })}
             />
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-fg-muted">
               Fixed amounts per variety — not percentages. Used as defaults when creating new varieties.
             </p>
             <Button type="submit" loading={updateMutation.isPending}>Save Settings</Button>
@@ -169,14 +169,14 @@ export function SettingsPage() {
 
           <div className="border-t pt-6">
             <h4 className="mb-3 font-medium">Upload Template Background</h4>
-            <p className="mb-3 text-sm text-slate-500">PDF, PNG, or JPG background template</p>
+            <p className="mb-3 text-sm text-fg-muted">PDF, PNG, or JPG background template</p>
             <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={handleFileUpload} />
             <Button variant="outline" onClick={() => fileRef.current?.click()} loading={uploadMutation.isPending}>
               <Upload className="h-4 w-4" /> Upload Template
             </Button>
             {template?.file_url && (
               <div className="mt-4">
-                <p className="text-sm text-slate-500">Current: {template.file_type?.toUpperCase()} template</p>
+                <p className="text-sm text-fg-muted">Current: {template.file_type?.toUpperCase()} template</p>
                 {(template.file_type === 'png' || template.file_type === 'jpg') && (
                   <img src={template.file_url} alt="Template preview" className="mt-2 max-h-48 rounded border" />
                 )}
@@ -186,12 +186,12 @@ export function SettingsPage() {
 
           <div className="border-t pt-6">
             <h4 className="mb-3 font-medium">Layout Editor</h4>
-            <p className="mb-4 text-sm text-slate-500">
+            <p className="mb-4 text-sm text-fg-muted">
               Adjust text positions with input fields. Drag-and-drop positioning can be added later.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               {(['productName', 'varietyName', 'price', 'description', 'sku'] as const).map((field) => (
-                <div key={field} className="rounded-lg border p-3 dark:border-slate-700">
+                <div key={field} className="rounded-lg border p-3 border-border">
                   <p className="mb-2 text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</p>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
@@ -215,7 +215,7 @@ export function SettingsPage() {
                   </div>
                 </div>
               ))}
-              <div className="rounded-lg border p-3 dark:border-slate-700">
+              <div className="rounded-lg border p-3 border-border">
                 <p className="mb-2 text-sm font-medium">Image Position</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Input label="X" type="number" value={layout.image.x} onChange={(e) => updateLayoutField('image', 'x', parseInt(e.target.value) || 0)} />

@@ -78,7 +78,7 @@ export function IngredientDetailPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{ingredient.name}</h1>
-          <p className="text-slate-500">Base unit: {ingredient.base_unit}</p>
+          <p className="text-fg-muted">Base unit: {ingredient.base_unit}</p>
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export function IngredientDetailPage() {
               value={bufferValue}
               onChange={(v) => setValue('default_buffer_percentage', v)}
             />
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-fg-muted">
               Used for supplier price change alerts only — product costing uses each variety&apos;s own buffer.
             </p>
             <input type="hidden" {...register('name')} />
@@ -124,7 +124,7 @@ export function IngredientDetailPage() {
           <>
             {vendors.length > 0 && (
               <select
-                className="mb-4 rounded border px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-900"
+                className="mb-4 rounded border px-2 py-1 text-sm border-border-strong bg-input"
                 value={vendorFilter}
                 onChange={(e) => setVendorFilter(e.target.value)}
               >
@@ -153,7 +153,7 @@ export function IngredientDetailPage() {
           </thead>
           <tbody>
             {filteredHistory.length === 0 ? (
-              <tr><td colSpan={7} className="py-6 text-center text-slate-500">No price changes</td></tr>
+              <tr><td colSpan={7} className="py-6 text-center text-fg-muted">No price changes</td></tr>
             ) : (
               filteredHistory.map((h) => (
                 <tr key={h.id} className="border-b">
@@ -174,7 +174,7 @@ export function IngredientDetailPage() {
       </TabPanel>
 
       <TabPanel active={tab} id="products">
-        <p className="mb-2 text-sm text-slate-500">
+        <p className="mb-2 text-sm text-fg-muted">
           {ingredient.name} — used in {(usedIn ?? []).length} recipe line(s)
         </p>
         <table className="w-full text-sm">
@@ -187,7 +187,7 @@ export function IngredientDetailPage() {
           </thead>
           <tbody>
             {(usedIn ?? []).length === 0 ? (
-              <tr><td colSpan={3} className="py-6 text-center text-slate-500">Not used in any recipes yet</td></tr>
+              <tr><td colSpan={3} className="py-6 text-center text-fg-muted">Not used in any recipes yet</td></tr>
             ) : (
               (usedIn ?? []).map((row: IngredientUsedInVariety) => (
                 <tr key={`${row.variety_id}-${row.quantity_used}`} className="border-b">
@@ -195,7 +195,7 @@ export function IngredientDetailPage() {
                   <td className="py-2">
                     <Link
                       to={`/products/${row.product_id}/varieties/${row.variety_id}`}
-                      className="text-emerald-600 hover:underline"
+                      className="text-accent hover:underline"
                     >
                       {row.size_label || row.variety_name}
                     </Link>
@@ -209,7 +209,7 @@ export function IngredientDetailPage() {
       </TabPanel>
 
       <TabPanel active={tab} id="impact">
-        <p className="mb-3 text-sm text-slate-500">
+        <p className="mb-3 text-sm text-fg-muted">
           Simulates applying the latest supplier price to this ingredient. Cost and margin statuses use each variety&apos;s buffer vs its latest acceptance snapshot.
         </p>
         <table className="w-full text-sm">
@@ -228,14 +228,14 @@ export function IngredientDetailPage() {
           </thead>
           <tbody>
             {(impact ?? []).length === 0 ? (
-              <tr><td colSpan={9} className="py-6 text-center text-slate-500">No products use this ingredient</td></tr>
+              <tr><td colSpan={9} className="py-6 text-center text-fg-muted">No products use this ingredient</td></tr>
             ) : (
               (impact ?? []).map((row) => (
                 <tr key={row.variety_id} className="border-b">
                   <td className="py-2">
                     <Link
                       to={`/products/${row.product_id}/varieties/${row.variety_id}`}
-                      className="text-emerald-600 hover:underline"
+                      className="text-accent hover:underline"
                     >
                       {row.product_name} {row.variety_label}
                     </Link>

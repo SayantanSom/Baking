@@ -4,8 +4,8 @@ import { RETAILERS, openRetailerSearch } from '@/services/retailerUrls'
 
 export function RetailerPriceLookup({ ingredientName }: { ingredientName: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
-      <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+    <div className="rounded-lg border border-border bg-surface p-3">
+      <p className="mb-2 text-sm font-medium text-fg-secondary">
         Find cost price on retailer
       </p>
       <div className="flex flex-wrap gap-2">

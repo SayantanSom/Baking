@@ -1,0 +1,159 @@
+/*
+ * Central theme tokens — light/dark values swap via .dark on <html>.
+ * Components use semantic utilities (text-fg, bg-surface, …) instead of dark: variants.
+ */
+:root {
+  --theme-fg: #0f172a;
+  --theme-fg-secondary: #334155;
+  --theme-fg-muted: #64748b;
+  --theme-fg-subtle: #94a3b8;
+
+  --theme-bg-page: #f8fafc;
+  --theme-bg-surface: #ffffff;
+  --theme-bg-surface-muted: #f8fafc;
+  --theme-bg-elevated: #ffffff;
+  --theme-bg-hover: #f1f5f9;
+  --theme-bg-input: #ffffff;
+
+  --theme-border: #e2e8f0;
+  --theme-border-strong: #cbd5e1;
+
+  --theme-accent: #059669;
+  --theme-accent-hover: #047857;
+  --theme-accent-solid: #059669;
+  --theme-accent-solid-fg: #ffffff;
+  --theme-accent-muted-bg: #ecfdf5;
+  --theme-accent-muted-fg: #047857;
+
+  --theme-danger: #dc2626;
+  --theme-danger-hover: #b91c1c;
+  --theme-danger-muted-bg: #fef2f2;
+  --theme-danger-muted-fg: #991b1b;
+
+  --theme-warning-bg: #fffbeb;
+  --theme-warning-border: #fde68a;
+  --theme-warning-fg: #92400e;
+  --theme-warning-fg-secondary: #b45309;
+
+  --theme-status-green-bg: #d1fae5;
+  --theme-status-green-fg: #065f46;
+  --theme-status-amber-bg: #fef3c7;
+  --theme-status-amber-fg: #92400e;
+  --theme-status-red-bg: #fee2e2;
+  --theme-status-red-fg: #991b1b;
+
+  --theme-chart-grid: #e2e8f0;
+  --theme-chart-text: #64748b;
+  --theme-chart-line: #059669;
+}
+
+.dark {
+  --theme-fg: #f1f5f9;
+  --theme-fg-secondary: #cbd5e1;
+  --theme-fg-muted: #94a3b8;
+  --theme-fg-subtle: #64748b;
+
+  --theme-bg-page: #020617;
+  --theme-bg-surface: #0f172a;
+  --theme-bg-surface-muted: #1e293b;
+  --theme-bg-elevated: #0f172a;
+  --theme-bg-hover: #1e293b;
+  --theme-bg-input: #0f172a;
+
+  --theme-border: #334155;
+  --theme-border-strong: #475569;
+
+  --theme-accent: #34d399;
+  --theme-accent-hover: #6ee7b7;
+  --theme-accent-solid: #10b981;
+  --theme-accent-solid-fg: #ffffff;
+  --theme-accent-muted-bg: rgb(6 78 59 / 0.3);
+  --theme-accent-muted-fg: #6ee7b7;
+
+  --theme-danger: #f87171;
+  --theme-danger-hover: #fca5a5;
+  --theme-danger-muted-bg: rgb(127 29 29 / 0.4);
+  --theme-danger-muted-fg: #fca5a5;
+
+  --theme-warning-bg: rgb(120 53 15 / 0.2);
+  --theme-warning-border: #92400e;
+  --theme-warning-fg: #fde68a;
+  --theme-warning-fg-secondary: #fcd34d;
+
+  --theme-status-green-bg: rgb(6 78 59 / 0.4);
+  --theme-status-green-fg: #6ee7b7;
+  --theme-status-amber-bg: rgb(120 53 15 / 0.4);
+  --theme-status-amber-fg: #fcd34d;
+  --theme-status-red-bg: rgb(127 29 29 / 0.4);
+  --theme-status-red-fg: #fca5a5;
+
+  --theme-chart-grid: #334155;
+  --theme-chart-text: #94a3b8;
+  --theme-chart-line: #34d399;
+}
+
+@theme {
+  --color-fg: var(--theme-fg);
+  --color-fg-secondary: var(--theme-fg-secondary);
+  --color-fg-muted: var(--theme-fg-muted);
+  --color-fg-subtle: var(--theme-fg-subtle);
+
+  --color-page: var(--theme-bg-page);
+  --color-surface: var(--theme-bg-surface);
+  --color-surface-muted: var(--theme-bg-surface-muted);
+  --color-elevated: var(--theme-bg-elevated);
+  --color-hover: var(--theme-bg-hover);
+  --color-input: var(--theme-bg-input);
+
+  --color-border: var(--theme-border);
+  --color-border-strong: var(--theme-border-strong);
+
+  --color-accent: var(--theme-accent);
+  --color-accent-solid: var(--theme-accent-solid);
+  --color-accent-solid-fg: var(--theme-accent-solid-fg);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-accent-muted: var(--theme-accent-muted-bg);
+  --color-accent-muted-fg: var(--theme-accent-muted-fg);
+
+  --color-danger: var(--theme-danger);
+  --color-danger-hover: var(--theme-danger-hover);
+  --color-danger-muted: var(--theme-danger-muted-bg);
+  --color-danger-muted-fg: var(--theme-danger-muted-fg);
+
+  --color-warning: var(--theme-warning-fg);
+  --color-warning-secondary: var(--theme-warning-fg-secondary);
+  --color-warning-muted: var(--theme-warning-bg);
+  --color-warning-border: var(--theme-warning-border);
+
+  --color-status-green-bg: var(--theme-status-green-bg);
+  --color-status-green-fg: var(--theme-status-green-fg);
+  --color-status-amber-bg: var(--theme-status-amber-bg);
+  --color-status-amber-fg: var(--theme-status-amber-fg);
+  --color-status-red-bg: var(--theme-status-red-bg);
+  --color-status-red-fg: var(--theme-status-red-fg);
+}
+
+@layer base {
+  body {
+    color: var(--theme-fg);
+    background-color: var(--theme-bg-page);
+  }
+
+  a:not([class]) {
+    color: var(--theme-accent);
+  }
+
+  th {
+    color: var(--theme-fg-secondary);
+    font-weight: 500;
+  }
+}
+
+/* Recharts */
+.recharts-cartesian-grid line {
+  stroke: var(--theme-chart-grid);
+}
+
+.recharts-text {
+  fill: var(--theme-chart-text);
+}

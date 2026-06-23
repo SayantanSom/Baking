@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { Button } from './Button'
 import { cn } from '@/lib/utils'
+import { theme } from '@/lib/theme'
 
 interface DialogProps {
   open: boolean
@@ -39,24 +40,18 @@ export function Dialog({
       />
       <div
         className={cn(
-          'relative z-10 w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900',
+          'relative z-10 w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl',
           className
         )}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-          <h2
-            id="dialog-title"
-            className="text-lg font-semibold text-slate-900 dark:text-slate-100"
-          >
+        <div className={cn('flex items-center justify-between px-6 py-4', theme.surfaceHeader)}>
+          <h2 id="dialog-title" className={theme.headingLg}>
             {title}
           </h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
+          <button onClick={onClose} className={cn('rounded-lg p-1', theme.navIconBtn)}>
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -89,16 +84,12 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} title={title}>
-      <p className="mb-6 text-slate-600 dark:text-slate-400">{message}</p>
+      <p className={cn('mb-6', theme.textSecondary)}>{message}</p>
       <div className="flex justify-end gap-3">
         <Button variant="ghost" onClick={onClose} disabled={loading}>
           Cancel
         </Button>
-        <Button
-          variant={variant}
-          onClick={onConfirm}
-          loading={loading}
-        >
+        <Button variant={variant} onClick={onConfirm} loading={loading}>
           {confirmLabel}
         </Button>
       </div>

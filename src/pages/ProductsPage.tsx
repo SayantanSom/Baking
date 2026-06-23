@@ -85,7 +85,7 @@ function ProductFormDialog({
         <Input label="Category" {...register('category')} />
         <div>
           <label className="mb-1.5 block text-sm font-medium">Description</label>
-          <textarea {...register('description')} rows={3} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900" />
+          <textarea {...register('description')} rows={3} className="w-full rounded-lg border border-border-strong bg-input px-3 py-2 text-sm" />
         </div>
         <Input label="Image URL" type="url" {...register('image_url')} />
         {!isEditing && (
@@ -97,7 +97,7 @@ function ProductFormDialog({
               step={1}
               {...register('recipe_yield', { valueAsNumber: true, min: 1, required: true })}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-fg-muted">
               Units per batch (e.g. 6 for a 6-pack). Creates the base recipe and first variety.
             </p>
             <Input
@@ -181,7 +181,7 @@ export function ProductsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-slate-500">
+          <p className="text-fg-muted">
             Expand a product to manage varieties and catalogue selection
           </p>
         </div>
@@ -191,20 +191,20 @@ export function ProductsPage() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle" />
         <input
           type="text"
           placeholder="Search product, variety, size, SKU..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm dark:border-slate-600 dark:bg-slate-900"
+          className="w-full rounded-lg border border-border-strong bg-input py-2 pl-10 pr-4 text-sm"
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+            <tr className="border-b bg-surface-muted">
               <th className="w-10 px-2 py-3" />
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Category</th>
@@ -216,7 +216,7 @@ export function ProductsPage() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">No products</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-fg-muted">No products</td></tr>
             ) : (
               filtered.map((product) => {
                 const isOpen = expanded.has(product.id)
@@ -227,15 +227,15 @@ export function ProductsPage() {
                   <Fragment key={product.id}>
                     <tr
                       className={cn(
-                        'border-b border-slate-100 dark:border-slate-800',
-                        isOpen && 'bg-white dark:bg-slate-900'
+                        'border-b border-border',
+                        isOpen && 'bg-surface'
                       )}
                     >
                       <td className="px-2 py-3">
                         <button
                           type="button"
                           onClick={() => toggleExpanded(product.id)}
-                          className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                          className="rounded p-1 text-fg-muted hover:bg-hover hover:text-fg-secondary"
                           aria-expanded={isOpen}
                           aria-label={isOpen ? 'Collapse varieties' : 'Expand varieties'}
                         >
@@ -250,18 +250,18 @@ export function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => toggleExpanded(product.id)}
-                          className="text-left font-semibold text-slate-900 hover:text-emerald-700 dark:text-slate-100"
+                          className="text-left font-semibold text-fg hover:text-accent"
                         >
                           {product.name}
-                          <span className="ml-1.5 font-normal text-slate-500">
+                          <span className="ml-1.5 font-normal text-fg-muted">
                             ({varieties.length})
                           </span>
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-slate-600">{product.category || '—'}</td>
+                      <td className="px-4 py-3 text-fg-secondary">{product.category || '—'}</td>
                       <td className="px-4 py-3 text-right">—</td>
                       <td className="px-4 py-3 text-right">—</td>
-                      <td className="px-4 py-3 text-center text-slate-600">
+                      <td className="px-4 py-3 text-center text-fg-secondary">
                         {catalogueCount > 0 ? (
                           <span title="Varieties in catalogue">{catalogueCount}</span>
                         ) : (
@@ -298,7 +298,7 @@ export function ProductsPage() {
         </table>
       </div>
 
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-fg-muted">
         Tick catalogue checkboxes to include varieties in PDF exports from the Dashboard.
       </p>
 

@@ -35,13 +35,13 @@ export function VarietyAcceptancePanel({
       : 0
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <div className="rounded-lg border border-border bg-surface p-4">
       <h3 className="mb-3 font-semibold">Business position</h3>
       <div className="grid gap-4 sm:grid-cols-2 text-sm">
         <div>
-          <p className="text-slate-500">Current cost</p>
+          <p className="text-fg-muted">Current cost</p>
           <p className="font-medium">{formatCurrency(variety.current_cost_price, currency)}</p>
-          <p className="mt-2 text-slate-500">Accepted cost</p>
+          <p className="mt-2 text-fg-muted">Accepted cost</p>
           <p className="font-medium">
             {acceptance
               ? formatCurrency(acceptance.accepted_cost_price, currency)
@@ -49,9 +49,9 @@ export function VarietyAcceptancePanel({
           </p>
         </div>
         <div>
-          <p className="text-slate-500">Current price</p>
+          <p className="text-fg-muted">Current price</p>
           <p className="font-medium">{formatCurrency(variety.selling_price, currency)}</p>
-          <p className="mt-2 text-slate-500">Accepted price</p>
+          <p className="mt-2 text-fg-muted">Accepted price</p>
           <p className="font-medium">
             {acceptance
               ? formatCurrency(acceptance.accepted_selling_price, currency)
@@ -59,9 +59,9 @@ export function VarietyAcceptancePanel({
           </p>
         </div>
         <div>
-          <p className="text-slate-500">Margin value</p>
+          <p className="text-fg-muted">Margin value</p>
           <p className="font-medium">{formatCurrency(currentMarginValue, currency)}</p>
-          <p className="mt-2 text-slate-500">Accepted margin</p>
+          <p className="mt-2 text-fg-muted">Accepted margin</p>
           <p className="font-medium">
             {acceptance
               ? formatCurrency(acceptance.accepted_margin_value, currency)
@@ -69,9 +69,9 @@ export function VarietyAcceptancePanel({
           </p>
         </div>
         <div>
-          <p className="text-slate-500">Margin %</p>
+          <p className="text-fg-muted">Margin %</p>
           <p className="font-medium">{currentMarginPct.toFixed(1)}%</p>
-          <p className="mt-2 text-slate-500">Accepted margin %</p>
+          <p className="mt-2 text-fg-muted">Accepted margin %</p>
           <p className="font-medium">
             {acceptance
               ? `${acceptance.accepted_margin_percentage.toFixed(1)}%`
@@ -92,7 +92,7 @@ export function VarietyAcceptancePanel({
           </span>
         )}
         {review && (
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-fg-muted">
             {review.marginValueDelta >= 0 ? '+' : ''}
             {formatCurrency(review.marginValueDelta, currency)} ·{' '}
             {review.marginPpDelta >= 0 ? '+' : ''}
@@ -102,7 +102,7 @@ export function VarietyAcceptancePanel({
       </div>
 
       {acceptance ? (
-        <div className="mt-3 text-sm text-slate-500">
+        <div className="mt-3 text-sm text-fg-muted">
           <p>Last accepted: {formatDate(acceptance.accepted_at)}</p>
           <p>Reason: {reasonLabel(acceptance.accepted_reason_type)}</p>
           {acceptance.accepted_reason_notes && (
@@ -110,7 +110,7 @@ export function VarietyAcceptancePanel({
           )}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-slate-500">
+        <p className="mt-3 text-sm text-fg-muted">
           No baseline yet. Finish the recipe and production overheads, then use{' '}
           <strong>Accept Cost</strong> to lock in your starting position.
         </p>

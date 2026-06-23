@@ -165,7 +165,7 @@ function VarietyFormDialog({
         />
         <input type="hidden" {...register('buffer_percentage', { valueAsNumber: true })} />
         {!isEditing && preview.length > 0 && (
-          <div className="rounded border p-3 text-sm dark:border-slate-700">
+          <div className="rounded border p-3 text-sm border-border">
             <p className="mb-2 font-medium">Recipe preview (factor {factor})</p>
             <table className="w-full">
               <tbody>
@@ -276,7 +276,7 @@ export function ProductDetailPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{product.name}</h1>
-          {product.category && <p className="text-sm text-slate-400">{product.category}</p>}
+          {product.category && <p className="text-sm text-fg-subtle">{product.category}</p>}
         </div>
       </div>
 
@@ -291,8 +291,8 @@ export function ProductDetailPage() {
       />
 
       <TabPanel active={tab} id="overview">
-        {product.description && <p className="text-slate-600">{product.description}</p>}
-        <p className="text-sm text-slate-500">
+        {product.description && <p className="text-fg-secondary">{product.description}</p>}
+        <p className="text-sm text-fg-muted">
           Workflow: define base recipe → create varieties with a scaling factor → optionally override per variety.
         </p>
       </TabPanel>
@@ -332,7 +332,7 @@ export function ProductDetailPage() {
 
             {activeVersion && (
               <>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-fg-muted">
                   Yield: {activeVersion.recipe_yield} · Total cost: {formatCurrency(baseTotal, currency)}
                   {!isCurrentEditable && ' · Read-only historical version'}
                 </p>
@@ -377,7 +377,7 @@ export function ProductDetailPage() {
                   </thead>
                   <tbody>
                     {(activeVersion.product_base_recipe_ingredients ?? []).length === 0 ? (
-                      <tr><td colSpan={5} className="py-6 text-center text-slate-500">Add ingredients to your base recipe</td></tr>
+                      <tr><td colSpan={5} className="py-6 text-center text-fg-muted">Add ingredients to your base recipe</td></tr>
                     ) : (
                       (activeVersion.product_base_recipe_ingredients ?? []).map((line) => (
                         <tr key={line.id} className="border-b">
@@ -385,7 +385,7 @@ export function ProductDetailPage() {
                             {line.ingredient_id ? (
                               <Link
                                 to={`/ingredients/${line.ingredient_id}`}
-                                className="text-emerald-600 hover:underline"
+                                className="text-accent hover:underline"
                               >
                                 {line.ingredient?.name}
                               </Link>
@@ -395,7 +395,7 @@ export function ProductDetailPage() {
                           </td>
                           <td className="py-2 text-right">{line.quantity_used} {line.unit}</td>
                           <td className="py-2 capitalize">{line.scaling_mode}</td>
-                          <td className="py-2 text-right text-emerald-600">
+                          <td className="py-2 text-right text-accent">
                             {formatCurrency(line.calculated_cost, currency)}
                           </td>
                           {isCurrentEditable && (
@@ -420,7 +420,7 @@ export function ProductDetailPage() {
 
       <TabPanel active={tab} id="varieties">
         <div className="mb-4 flex justify-between">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-fg-muted">
             {canCreateVariety
               ? 'Create varieties from the base recipe or copy an existing variety. Set packaging, labour, and shipping when creating or editing.'
               : 'Add a base recipe or create a first variety before adding more'}
@@ -432,10 +432,10 @@ export function ProductDetailPage() {
             <Plus className="h-4 w-4" /> Create Variety
           </Button>
         </div>
-        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+        <div className="overflow-hidden rounded-xl border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
+              <tr className="border-b bg-surface-muted">
                 <th className="px-4 py-3 text-left">Variety</th>
                 <th className="px-4 py-3 text-left">Size</th>
                 <th className="px-4 py-3 text-right">Factor</th>
@@ -449,23 +449,23 @@ export function ProductDetailPage() {
             </thead>
             <tbody>
               {varieties.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-500">No varieties yet</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-fg-muted">No varieties yet</td></tr>
               ) : (
                 varieties.map((v) => (
-                  <tr key={v.id} className="border-b border-slate-100 dark:border-slate-800">
+                  <tr key={v.id} className="border-b border-border">
                     <td className="px-4 py-3 font-medium">
                       {v.variety_name}
                       {v.has_manual_recipe_overrides && (
-                        <span className="ml-2 text-xs text-amber-600">modified</span>
+                        <span className="ml-2 text-xs text-warning-secondary">modified</span>
                       )}
                     </td>
                     <td className="px-4 py-3">{v.size_label || '—'}</td>
                     <td className="px-4 py-3 text-right">{v.base_recipe_factor}</td>
                     <td className="px-4 py-3 text-right">{formatCurrency(v.selling_price, currency)}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(v.packaging_cost, currency)}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(v.labour_cost, currency)}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{formatCurrency(v.shipping_cost ?? 0, currency)}</td>
-                    <td className="px-4 py-3 text-right text-emerald-600">{formatCurrency(v.current_cost_price, currency)}</td>
+                    <td className="px-4 py-3 text-right text-fg-secondary">{formatCurrency(v.packaging_cost, currency)}</td>
+                    <td className="px-4 py-3 text-right text-fg-secondary">{formatCurrency(v.labour_cost, currency)}</td>
+                    <td className="px-4 py-3 text-right text-fg-secondary">{formatCurrency(v.shipping_cost ?? 0, currency)}</td>
+                    <td className="px-4 py-3 text-right text-accent">{formatCurrency(v.current_cost_price, currency)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
                         <Link to={`/products/${product.id}/varieties/${v.id}`}>

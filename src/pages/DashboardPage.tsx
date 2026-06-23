@@ -83,16 +83,16 @@ export function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-slate-500">Search varieties and generate catalogues</p>
+        <p className="text-fg-muted">Search varieties and generate catalogues</p>
       </div>
 
       {hasAlerts && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-          <div className="flex items-center gap-2 text-amber-800">
+        <div className="rounded-xl border border-warning-border bg-warning-muted p-4">
+          <div className="flex items-center gap-2 text-warning">
             <AlertTriangle className="h-5 w-5" />
             <span className="font-medium">Cost alerts require attention</span>
           </div>
-          <p className="mt-1 text-sm text-amber-700">
+          <p className="mt-1 text-sm text-warning-secondary">
             {stats.productsOverBuffer > 0 && `${stats.productsOverBuffer} over buffer. `}
             {stats.productsNearBuffer > 0 && `${stats.productsNearBuffer} near buffer.`}
           </p>
@@ -114,13 +114,13 @@ export function DashboardPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle" />
             <input
               type="text"
               placeholder="Search product, variety, size, SKU, category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm dark:border-slate-600 dark:bg-slate-900"
+              className="w-full rounded-lg border border-border-strong bg-input py-2 pl-10 pr-4 text-sm"
             />
           </div>
 
@@ -137,10 +137,10 @@ export function DashboardPage() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
+                <tr className="border-b bg-surface-muted">
                   <th className="px-3 py-2 w-10"></th>
                   <th className="px-3 py-2 text-left">Product</th>
                   <th className="px-3 py-2 text-left">Variety</th>
@@ -153,12 +153,12 @@ export function DashboardPage() {
               </thead>
               <tbody>
                 {searchLoading ? (
-                  <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-500">Searching...</td></tr>
+                  <tr><td colSpan={8} className="px-3 py-6 text-center text-fg-muted">Searching...</td></tr>
                 ) : results.length === 0 ? (
-                  <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-500">No results</td></tr>
+                  <tr><td colSpan={8} className="px-3 py-6 text-center text-fg-muted">No results</td></tr>
                 ) : (
                   results.map((r) => (
-                    <tr key={r.variety.id} className="border-b border-slate-100 dark:border-slate-800">
+                    <tr key={r.variety.id} className="border-b border-border">
                       <td className="px-3 py-2">
                         <input
                           type="checkbox"
@@ -189,17 +189,17 @@ export function DashboardPage() {
           <CardHeader><CardTitle>Recently Updated Ingredients</CardTitle></CardHeader>
           <CardContent>
             {recentIngredients.length === 0 ? (
-              <p className="text-sm text-slate-500">No ingredients yet</p>
+              <p className="text-sm text-fg-muted">No ingredients yet</p>
             ) : (
               <div className="space-y-3">
                 {recentIngredients.map((ing) => (
                   <Link
                     key={ing.id}
                     to={`/ingredients/${ing.id}`}
-                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-hover"
                   >
                     <p className="font-medium">{ing.name}</p>
-                    <p className="text-emerald-600">
+                    <p className="text-accent">
                       {ing.active_vendor_price
                         ? formatUnitCost(ing.active_vendor_price.cost_per_base_unit, currency)
                         : '—'}
@@ -215,12 +215,12 @@ export function DashboardPage() {
           <CardHeader><CardTitle>Varieties Requiring Review</CardTitle></CardHeader>
           <CardContent>
             {reviewVarieties.length === 0 ? (
-              <p className="text-sm text-slate-500">All within buffer thresholds</p>
+              <p className="text-sm text-fg-muted">All within buffer thresholds</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b bg-slate-50 dark:bg-slate-800/50">
+                    <tr className="border-b bg-surface-muted">
                       <th className="px-3 py-2 text-left">Product</th>
                       <th className="px-3 py-2 text-left">Cost Status</th>
                       <th className="px-3 py-2 text-right">Margin Value</th>
@@ -230,10 +230,10 @@ export function DashboardPage() {
                   </thead>
                   <tbody>
                     {reviewVarieties.map((r) => (
-                      <tr key={r.variety.id} className="border-b border-slate-100 dark:border-slate-800">
+                      <tr key={r.variety.id} className="border-b border-border">
                         <td className="px-3 py-2">
                           <p className="font-medium">{r.displayName}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-fg-muted">
                             {formatCurrency(r.variety.current_cost_price, currency)}
                           </p>
                         </td>
